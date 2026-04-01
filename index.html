@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>King_Nugget_AU | Project Hub</title>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+    :root {
+      --bg: #030303;
+      --accent: #10b981;
+      --panel: #0a0a0f;
+      --border: rgba(16, 185, 129, 0.1);
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg);
+      color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .hub-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .bg-grid {
+      position: fixed; inset: 0;
+      background-image: linear-gradient(to right, rgba(16, 185, 129, 0.02) 1px, transparent 1px), 
+                        linear-gradient(to bottom, rgba(16, 185, 129, 0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      z-index: -1;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding: 1rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .nav-btn.active {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 4px solid var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+    
+    @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .pulse-text { animation: pulse-soft 2s infinite; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .scroll-box {
+      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    .thumb-box {
+      aspect-ratio: 16 / 9;
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const MATH_PROOF_A = [
+      "$$ \\int_{midnight}^{dawn} (MarsBars \\times BloodSugar) \\,dt > \\sum (LegalFees \\times Inflation) $$"
+    ];
+    const MATH_PROOF_B = [
+      "$$ \\lim_{hunger \\to \\infty} \\frac{Chocolate}{Money} = \\infty $$"
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('home');
+      const [comms, setComms] = useState([
+        { user: 'System', msg: 'Node.js memory leak identified in background scripts.' },
+        { user: 'System', msg: 'Clearing local caches and restarting dev environment...' },
+        { user: 'System', msg: 'Build successful. Port 3000 is open. Hub is live.' }
+      ]);
+      const [input, setInput] = useState('');
+      const [timeSince, setTimeSince] = useState({ h: 0, m: 0, s: 0 });
+
+      useEffect(() => {
+        const incidentTime = new Date('2026-04-01T00:00:00').getTime();
+        const interval = setInterval(() => {
+          const now = Date.now();
+          const diff = Math.max(0, now - incidentTime);
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff / (1000 * 60)) % 60);
+          const s = Math.floor((diff / 1000) % 60);
+          setTimeSince({ h, m, s });
+        }, 1000);
+        return () => clearInterval(interval);
+      }, []);
+
+      const handleSend = (e) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        setComms(prev => [...prev, { user: 'Guest', msg: input }].slice(-10));
+        setInput('');
+      };
+
+      const renderContent = () => {
+        switch (activeTab) {
+          case 'home':
+            return (
+              <div className="flex flex-col items-center justify-center text-center animate-fade h-full py-12">
+                <div className="w-full max-w-2xl mb-10 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-center gap-4">
+                  <i className="fa-solid fa-check text-emerald-500"></i>
+                  <p className="text-xs font-mono text-emerald-500 uppercase tracking-widest font-bold">Status: Bug fixes applied. Launch phase complete.</p>
+                </div>
+
+                <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] flex items-center justify-center mb-10 shadow-2xl shadow-emerald-500/10 group hover:scale-105 transition-transform">
+                  <i className="fa-solid fa-crown text-4xl text-emerald-500"></i>
+                </div>
+                
+                <h1 className="text-6xl lg:text-9xl font-black text-white mb-8 uppercase tracking-tighter leading-none">
+                  <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="hover:text-emerald-400 transition-all">King_Nugget_AU</a>
+                </h1>
+                
+                <p className="text-slate-400 max-w-xl mx-auto mb-8 text-base lg:text-xl font-light leading-relaxed">
+                  Welcome to my project hub. I'm learning to build things one script at a time. Apologies for the launch delay—had a massive Node.js memory leak crash the local build right at midnight. Finally got the CSS grid patched and the background loops killed. We are live.
+                </p>
+
+                <div className="mb-12 inline-block px-6 py-3 bg-black/50 border border-emerald-900/50 rounded-2xl">
+                  <p className="text-[10px] font-mono text-emerald-500 uppercase tracking-widest mb-1">Server Uptime</p>
+                  <p className="text-xl font-mono text-white font-black tracking-widest">
+                    {timeSince.h.toString().padStart(2, '0')}:{timeSince.m.toString().padStart(2, '0')}:{timeSince.s.toString().padStart(2, '0')}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-6">
+                  <a href="game.html" className="px-10 lg:px-12 py-4 lg:py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-2xl text-xs uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:-translate-y-1">Play Axiom Syndicate</a>
+                  <button type="button" onClick={() => setActiveTab('portfolio')} className="px-10 lg:px-12 py-4 lg:py-5 bg-white/5 border border-white/10 text-white font-black rounded-2xl text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all shadow-xl">Archive</button>
+                  <button type="button" onClick={() => setActiveTab('logs')} className="px-10 lg:px-12 py-4 lg:py-5 bg-white/5 border border-white/10 text-white font-black rounded-2xl text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all shadow-xl">Dev Notes</button>
+                </div>
+                
+                <div className="mt-16 text-[10px] font-mono uppercase tracking-[0.3em] text-slate-700 font-bold max-w-sm">
+                   Running on 4 hours of sleep and 6 Mars Bars. The network cables are finally straight.
+                </div>
+              </div>
+            );
+          case 'economy':
+            return (
+              <div className="flex flex-col lg:flex-row gap-12 animate-fade h-full scroll-box no-scrollbar">
+                <div className="flex-1 space-y-10">
+                  <div className="border-b border-white/5 pb-4">
+                    <h2 className="text-2xl font-bold uppercase tracking-tight">The Chocolate Economy</h2>
+                    <p className="text-emerald-500 font-mono text-[10px] uppercase tracking-widest mt-1 font-bold italic">Currency Stability Analysis</p>
+                  </div>
+                  
+                  <div className="hub-panel p-8 lg:p-12 rounded-[2.5rem] border-emerald-500/10 bg-emerald-500/[0.01]">
+                    <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-8 underline decoration-emerald-900 underline-offset-8">Proof of Superiority: $CHO vs $USD</h3>
+                    <div className="font-mono text-sm text-slate-400 leading-relaxed space-y-8">
+                      <p>Let $V_{fiat}$ represent the value of traditional currency and $C_{sugar}$ represent the value of a Mars Bar.</p>
+                      <div className="p-6 bg-black/60 rounded-2xl border border-white/5 text-emerald-400 font-bold break-all shadow-inner">
+                        {MATH_PROOF_A[0]}
+                      </div>
+                      <p>Given the utility coefficient ($U_{choc}$) is universally high for both network gremlins ($G$) and low-budget lawyers ($L$):</p>
+                      <div className="p-6 bg-black/60 rounded-2xl border border-white/5 text-emerald-400 font-bold break-all shadow-inner">
+                        {MATH_PROOF_B[0]}
+                      </div>
+                      <p className="text-[11px] text-slate-700 font-bold uppercase tracking-widest bg-emerald-900/10 p-4 rounded-xl">
+                        Fact: Mars Bars are the only stable asset class in a midnight coding crisis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:w-96 shrink-0 space-y-8">
+                  <div className="hub-panel p-8 rounded-3xl">
+                    <h4 className="text-xs font-black text-amber-600 uppercase tracking-widest mb-6">Useless Chocolate Facts</h4>
+                    <ul className="space-y-4 text-xs text-slate-400 leading-relaxed">
+                      <li className="flex gap-3"><span className="text-amber-700">01.</span> White chocolate isn't technically chocolate (it contains no cocoa solids).</li>
+                      <li className="flex gap-3"><span className="text-amber-700">02.</span> Chocolate scent increases theta brain waves, triggering immediate relaxation.</li>
+                      <li className="flex gap-3"><span className="text-amber-700">03.</span> Each pound of chocolate requires roughly 400 cocoa beans.</li>
+                      <li className="flex gap-3"><span className="text-amber-700">04.</span> Ruth Wakefield invented the chocolate chip cookie by accident in 1930.</li>
+                      <li className="flex gap-3"><span className="text-amber-700">05.</span> Aztecs once traded cocoa beans as currency for clothing and food.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            );
+          case 'comms':
+            return (
+              <div className="flex flex-col lg:flex-row gap-10 animate-fade h-full">
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="border-b border-white/5 pb-4 mb-8 flex justify-between items-center">
+                    <div>
+                      <h2 className="text-2xl font-bold uppercase tracking-tight">Local Comms</h2>
+                      <p className="text-emerald-500 font-mono text-[10px] uppercase tracking-widest mt-1 font-bold italic">Session-Only Terminal</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 flex flex-col justify-end space-y-4 mb-8 overflow-hidden">
+                    {comms.map((c, i) => (
+                      <div key={i} className="text-xs font-mono flex gap-4 animate-fade px-2">
+                        <span className="text-emerald-900 font-black uppercase tracking-tighter shrink-0">[{c.user}]:</span>
+                        <span className="text-slate-400">{c.msg}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <form onSubmit={handleSend} className="relative">
+                    <input 
+                      type="text" 
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Enter message to terminal..."
+                      className="w-full bg-black/50 border rounded-2xl px-6 py-5 text-sm font-mono focus:outline-none transition-all border-emerald-900/30 focus:border-emerald-500/50 text-emerald-400"
+                    />
+                    <button type="submit" className="absolute right-6 top-4.5 transition-colors text-emerald-500 hover:text-white">
+                      <i className="fa-solid fa-paper-plane text-lg"></i>
+                    </button>
+                  </form>
+                </div>
+
+                <div className="lg:w-80 shrink-0 space-y-8 pt-6 lg:pt-0">
+                  <div className="hub-panel p-8 rounded-3xl border-emerald-500/10">
+                    <h4 className="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-4">Internal Briefing</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed italic mb-6">
+                      This terminal only ever shows what you were around for. It does not save data locally nor can it recall data. Just a fun little script I learned to write.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          case 'portfolio':
+            return (
+              <div className="space-y-12 animate-fade h-full scroll-box no-scrollbar">
+                <div className="border-b border-white/5 pb-4">
+                  <h2 className="text-2xl font-bold uppercase tracking-tight">Project Archive</h2>
+                  <p className="text-emerald-500 font-mono text-[10px] uppercase tracking-widest mt-1 font-bold italic">
+                    <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="hover:text-emerald-400 transition-colors">King_Nugget_AU</a> // Content
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="block space-y-4 group cursor-pointer">
+                    <div className="thumb-box"><i className="fa-solid fa-music text-3xl text-emerald-500/30 group-hover:scale-110 transition-transform"></i></div>
+                    <h4 className="text-xs font-black uppercase text-white tracking-widest">Latest Composition</h4>
+                    <span className="text-[10px] text-emerald-500 group-hover:underline uppercase font-bold">Listen on YT</span>
+                  </a>
+                  <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="block space-y-4 group cursor-pointer">
+                    <div className="thumb-box"><i className="fa-solid fa-video text-3xl text-amber-500/30 group-hover:scale-110 transition-transform"></i></div>
+                    <h4 className="text-xs font-black uppercase text-white tracking-widest">Technical Vlog</h4>
+                    <span className="text-[10px] text-amber-500 group-hover:underline uppercase font-bold">Watch Video</span>
+                  </a>
+                  <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="block space-y-4 group cursor-pointer">
+                    <div className="thumb-box"><i className="fa-solid fa-bolt text-3xl text-blue-500/30 group-hover:scale-110 transition-transform"></i></div>
+                    <h4 className="text-xs font-black uppercase text-white tracking-widest">Latest Short</h4>
+                    <span className="text-[10px] text-blue-500 group-hover:underline uppercase font-bold">View Snippet</span>
+                  </a>
+                </div>
+
+                <div className="mt-16 pt-10 border-t border-white/5 grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div className="hub-panel p-8 rounded-3xl space-y-6">
+                    <div className="flex items-center gap-6">
+                       <div className="w-14 h-14 bg-black border border-white/5 rounded-2xl flex items-center justify-center shadow-lg">
+                          <i className="fa-solid fa-guitar text-slate-600 text-xl"></i>
+                       </div>
+                       <div>
+                          <p className="text-sm text-slate-200 font-black uppercase">
+                            <a href="https://www.youtube.com/@nocturnalmortician2352" target="_blank" className="hover:text-emerald-500 transition-colors">Nocturnal Mortician</a>
+                          </p>
+                          <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono font-bold">Audio Reference // Case Study</span>
+                       </div>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed italic border-l-2 border-slate-700 pl-4">
+                      "An active investigation into this creator's 'guitar journey.' They primarily upload raw punk and metal covers. I'm analyzing their high-gain tone settings and aggressive rhythm tracking to see how I can apply that raw edge to my own Foley and instrument sampling."
+                    </p>
+                  </div>
+
+                  <div className="hub-panel p-8 rounded-3xl bg-white/[0.01]">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Investigation Notes</h4>
+                    <ul className="space-y-4 text-xs font-bold text-slate-600 uppercase">
+                       <li className="flex justify-between border-b border-white/5 pb-3"><span>"Skulls" (Misfits)</span> <span className="text-emerald-600 font-black tracking-normal">Raw Crunch Tone</span></li>
+                       <li className="flex justify-between border-b border-white/5 pb-3"><span>"Bro Hymn" (Pennywise)</span> <span className="text-slate-400 font-black tracking-normal">Solid Rhythm Tracking</span></li>
+                       <li className="flex justify-between border-b border-white/5 pb-3"><span>"Fight For Your Right"</span> <span className="text-amber-500 font-black tracking-normal">Riff Isolation</span></li>
+                       <li className="flex justify-between"><span>Core Focus</span> <span className="text-blue-500 font-black tracking-normal">Documenting the Journey</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            );
+          case 'logs':
+            return (
+              <div className="space-y-10 animate-fade h-full scroll-box no-scrollbar flex flex-col justify-start pb-10">
+                <div className="border-b border-white/5 pb-4 shrink-0">
+                  <h2 className="text-2xl font-bold uppercase tracking-tight text-white">System Notes</h2>
+                  <p className="text-emerald-500 font-mono text-[10px] uppercase tracking-widest mt-1 font-bold">Node_SYD // v0.7.0 BETA</p>
+                </div>
+                
+                <div className="space-y-6">
+                   <div className="hub-panel p-8 rounded-[2.5rem] border-l-4 border-amber-500">
+                      <h4 className="text-xs font-black text-amber-500 uppercase tracking-widest mb-4">CRITICAL FIX // April 1, 2026</h4>
+                      <p className="text-sm text-slate-400 font-mono leading-relaxed">
+                        "Had a runaway loop in the background script that caused a massive memory leak right at launch. The whole dev environment locked up. Spent the last three hours killing Node processes, fixing the React state, and completely rebuilding the CSS grid. Just flushed the DNS and cleared the local caches. We should be totally stable now. Mars Bar count: 6."
+                      </p>
+                   </div>
+
+                   <div className="hub-panel p-8 rounded-[2.5rem] border-l-4 border-emerald-500">
+                      <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-4">Incident Log // April 1, 2026</h4>
+                      <p className="text-sm text-slate-400 font-mono italic leading-relaxed">
+                        "Fell asleep after realising he can't fix vehicles let alone code. Hopefully he's back soon."
+                      </p>
+                   </div>
+
+                   <div className="hub-panel p-8 rounded-[2.5rem] border-t border-white/5 bg-white/[0.01]">
+                      <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <i className="fa-solid fa-code-branch"></i> Developer Changelog
+                      </h4>
+                      <div className="space-y-5 text-xs font-mono text-slate-400 leading-relaxed">
+                        <div className="flex gap-4"><span className="text-slate-600 w-16 shrink-0">v0.1.0</span> <p>Initial React logic. Math was completely broken.</p></div>
+                        <div className="flex gap-4"><span className="text-slate-600 w-16 shrink-0">v0.3.5</span> <p>Added Data mechanics after 3 weeks of battling UI state.</p></div>
+                        <div className="flex gap-4"><span className="text-slate-600 w-16 shrink-0">v0.5.0</span> <p>Hit major memory leaks. Learned how to properly prompt AI to help fix them.</p></div>
+                        <div className="flex gap-4"><span className="text-slate-600 w-16 shrink-0">v0.6.2</span> <p>Finalized the dark mode terminal aesthetic.</p></div>
+                        <div className="flex gap-4"><span className="text-emerald-500 font-bold w-16 shrink-0">v0.7.0</span> <p className="text-slate-200">BETA LAUNCH. Memory leak patched. We are live.</p></div>
+                      </div>
+                   </div>
+                </div>
+              </div>
+            );
+          default:
+            return (
+               <div className="flex flex-col items-center justify-center text-center animate-fade h-full py-12">
+                 <h2 className="text-4xl font-black text-red-500 mb-4 uppercase">404 Error</h2>
+                 <p className="text-slate-400 font-mono">Node not found. Return to dashboard.</p>
+               </div>
+            );
+        }
+      };
+
+      return (
+        <div className="app-container">
+          <div className="bg-grid"></div>
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 lg:items-start flex-1 min-h-0">
+            <aside className="lg:w-72 shrink-0 space-y-16 py-6 lg:sticky lg:top-10">
+              <div>
+                <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Hub</h1>
+                <div className="flex items-center gap-3 mt-3 px-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-text shadow-[0_0_10px_#10b981]"></span>
+                  <p className="text-[11px] font-mono text-emerald-900 uppercase tracking-[0.4em] font-bold">King_Nugget_AU</p>
+                </div>
+              </div>
+              <nav className="flex flex-row lg:flex-col gap-3 overflow-x-auto no-scrollbar pb-2 lg:pb-0">
+                {[
+                  { id: 'home', l: 'Dashboard', i: 'fa-table-columns' },
+                  { id: 'comms', l: 'Terminal', i: 'fa-terminal' },
+                  { id: 'portfolio', l: 'Project Archive', i: 'fa-folder-open' },
+                  { id: 'economy', l: 'Economy', i: 'fa-cookie' },
+                  { id: 'logs', l: 'Dev Notes', i: 'fa-code' }
+                ].map(tab => (
+                  <button type="button" key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-5 px-8 py-5 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all shrink-0 border-l-4 ${activeTab === tab.id ? 'active shadow-lg' : 'text-slate-600 hover:text-slate-300 border-transparent hover:bg-white/5'}`}>
+                    <i className={`fa-solid ${tab.i} w-5 text-base`}></i> {tab.l}
+                  </button>
+                ))}
+              </nav>
+            </aside>
+            <main className="flex-1 hub-panel rounded-[3rem] lg:rounded-[5rem] p-8 lg:p-20 relative overflow-hidden flex flex-col justify-center shadow-[0_0_60px_rgba(0,0,0,0.9)] border-white/[0.05] min-h-[600px] lg:min-h-0">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/[0.02] blur-[180px] pointer-events-none"></div>
+              {renderContent()}
+            </main>
+          </div>
+          <footer className="mt-12 flex flex-col md:flex-row justify-between items-center px-10 text-[10px] font-mono text-slate-800 uppercase tracking-[0.5em] font-bold gap-6 py-8">
+            <span>&copy; 2026 King_Nugget_AU</span>
+            <span className="text-emerald-950 uppercase tracking-[0.2em]">node_syd // v0.7.0 BETA</span>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

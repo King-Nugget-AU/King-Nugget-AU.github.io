@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Axiom Syndicate: Infinite Hegemony</title>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #020202;
+      --term-green: #10b981;
+      --term-dark-green: #064e3b;
+      --panel-bg: rgba(15, 20, 25, 0.90);
+      --panel-border: rgba(16, 185, 129, 0.3);
+    }
+    
+    body { 
+      margin: 0; 
+      background-color: var(--bg-dark); 
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background-image: radial-gradient(circle at 50% 50%, #080a0c 0%, #000000 100%);
+      overscroll-behavior-y: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* Immersion Lock */
+    .lock-scroll { overflow: hidden !important; height: 100vh !important; width: 100vw !important; }
+    .allow-scroll { overflow: hidden; }
+
+    /* Hide all scrollbars globally while keeping scroll functionality */
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    /* CRT Scanline Effect */
+    .scanlines {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 4px, 3px 100%;
+      z-index: 50; pointer-events: none; opacity: 0.5;
+    }
+
+    .vignette {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.85) 100%);
+      z-index: 49; pointer-events: none;
+      animation: breathe 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes breathe { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+
+    .bg-grid {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background-image: linear-gradient(to right, rgba(16, 185, 129, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px; z-index: -1;
+    }
+
+    .glass-panel {
+      background: var(--panel-bg); backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .glitch-hover:hover {
+      animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+      color: #fff; text-shadow: 2px 0 #10b981, -2px 0 #ef4444;
+    }
+
+    @keyframes glitch-skew {
+      0%, 100% { transform: skew(0deg); }
+      20% { transform: skew(-5deg); } 40% { transform: skew(5deg); }
+      60% { transform: skew(-2deg); } 80% { transform: skew(2deg); }
+    }
+    
+    .cursor-blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Touch buttons - CRITICAL FIX FOR HOLD BUGS */
+    .hold-btn { touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+    .hold-btn:active:not(:disabled) { transform: scale(0.96); transition: transform 0.05s; }
+    
+    @keyframes floatUpAndFade { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-60px) scale(1.3); opacity: 0; } }
+    @keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin-slow 15s linear infinite; }
+    .animate-spin-slower-reverse { animation: spin-slow 25s linear infinite reverse; }
+    .modal-animate { animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    /* Hardware Specific Glitches */
+    .system-glitch-1 { filter: hue-rotate(90deg) blur(1px); transform: translate(2px, -2px); }
+    .system-glitch-2 { filter: invert(1) hue-rotate(180deg); transform: skew(2deg); }
+  </style>
+</head>
+<body class="lock-scroll" id="main-body">
+
+  <div class="scanlines" id="scanlines"></div>
+  <div class="vignette" id="vignette"></div>
+  <div class="bg-grid"></div>
+
+  <div id="root" class="w-full h-screen overflow-hidden relative z-10 flex flex-col"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+    const SAVE_KEY = 'axiomSyndicateSave_v0.7.0_beta'; 
+
+    // --- MATH FAILSAFES ---
+    // Prevent Memory Leaks and NaNs in late game exponential growth
+    const safeAdd = (currentValue, amountToAdd) => {
+        const result = currentValue + amountToAdd;
+        return Number.isFinite(result) && !Number.isNaN(result) ? result : currentValue;
+    };
+
+    // --- LORE SYSTEM (Encoded Tycoon Milestones) ---
+    // Base64 Encoded to prevent console-snooping, scrubbed of ARG narrative to standard Tycoon vibes.
+    const LORE_MESSAGES = [
+      { id: 1, req: () => true, text: atob("VFlDT09OIEVOR0lORSB2MC43LjAtQkVUQSBPTkxJTkUuIFRhcmdldCBNYXJrZXQ6IEdsb2JhbC4gQXdhaXRpbmcgY2FwaXRhbCBleHRyYWN0aW9uLg==") },
+      { id: 2, req: (s) => s.stats.totalClicks > 10, text: atob("TWFudWFsIGNhcGl0YWwgZXh0cmFjdGlvbiBkZXRlY3RlZC4gRGVsZWdhdGUgdG8gYXV0b21hdGVkIGFzc2V0cyB0byBlbnN1cmUgc2NhbGFibGUgY29uc3VtcHRpb24u") },
+      { id: 3, req: (s) => s.departments.stand >= 1, text: atob("QXNzZXQgYWNxdWlyZWQ6IExlbW9uYWRlIFN0YW5kLiBBIHJ1ZGltZW50YXJ5IGZyb250IGZvciBjYXBpdGFsIGdlbmVyYXRpb24u") },
+      { id: 4, req: (s) => s.departments.supermarket >= 1, text: atob("U3VwZXJtYXJrZXQgY2hhaW4gZXN0YWJsaXNoZWQuIFdlIG5vdyBjb250cm9sIHRoZWlyIGxvY2FsaXplZCBzdXBwbHkgbGluZXMu") },
+      { id: 5, req: (s) => s.capital >= 1e6, text: atob("Q2FwaXRhbCByZXNlcnZlcyBleGNlZWQgJDEsMDAwLDAwMC4gVGhlIFN5bmRpY2F0ZSBpcyBleHBhbmRpbmcgaXRzIG1hcmtldCBmb290cHJpbnQu") },
+      { id: 6, req: (s) => s.departments.bank >= 1, text: atob("SW52ZXN0bWVudCBCYW5rIGFjcXVpcmVkLiBXZSBub3cgY29udHJvbCB0aGUgZGVidCBvZiBvdXIgYWR2ZXJzYXJpZXMu") },
+      { id: 7, req: (s) => s.capital >= 1e9, text: atob("Q2FwaXRhbCByZXNlcnZlcyBleGNlZWQgJDEsMDAwLDAwMCwwMDAuIFByZXBhcmUgZm9yIEhvc3RpbGUgVGFrZW92ZXIgKEJ1eW91dCku") },
+      { id: 8, req: (s) => s.buyouts >= 1, text: atob("TWFya2V0IG1vbm9wb2xpemVkLiBUYWtlb3ZlciBjb21wbGV0ZS4gWW91ciBFcXVpdHkgc2VjdXJlcyBvdXIgZnV0dXJlIGFjcm9zcyBnbG9iYWwgbWFya2V0cy4=") },
+      { id: 9, req: (s) => s.data >= 1000, text: atob("U3Vic3RhbnRpYWwgdXNlciBkYXRhIGhhcnZlc3RlZC4gVGhlIGFsZ29yaXRobSBpcyBsZWFybmluZyBjb25zdW1lciBiZWhhdmlvci4=") },
+      { id: 10, req: (s) => s.buyouts >= 2, text: atob("QSBzZWNvbmQgbG9vcC4gVGhlIFN5bmRpY2F0ZSBleHBhbmRzIGluZGVmaW5pdGVseS4gVGltZSBpcyBtb25leS4=") },
+      { id: 11, req: (s) => s.capital >= 1e12, text: atob("VHJpbGxpb24tZG9sbGFyIHZhbHVhdGlvbi4gVGhlIGdsb2JhbCBtYXJrZXQgaXMgZnVuY3Rpb25hbGx5IG91cnMu") }
+    ];
+
+    const CORPORATE_RANKS = [
+      { name: "Street Vendor", req: 0, mult: 1 }, 
+      { name: "Local Business", req: 1e6, mult: 2 },
+      { name: "Regional Chain", req: 1e9, mult: 5 }, 
+      { name: "National Corporation", req: 1e12, mult: 15 },
+      { name: "Fortune 500 Company", req: 10e15, mult: 50 }, 
+      { name: "Multinational Conglomerate", req: 1e20, mult: 250 },
+      { name: "Trillion Dollar Cap", req: 1e25, mult: 1500 }, 
+      { name: "Global Hegemony", req: 1e32, mult: 10000 },
+      { name: "System Conglomerate", req: 1e42, mult: 50000 }, 
+      { name: "Galactic Megacorp", req: 1e55, mult: 500000 },
+      { name: "Universal Architect", req: 1e75, mult: 10000000 }, 
+      { name: "Multiversal Monopoly", req: 1e100, mult: 1000000000 },
+    ];
+
+    // INFLATED REAL-WORLD ECONOMY GAPS FOR INFINITE LIFESPAN
+    const INITIAL_DEPARTMENTS = {
+      stand: { id: 'stand', name: 'Lemonade Stand', baseCost: 50, baseProd: 20, costMult: 1.30, type: 'capital', icon: 'Coins', desc: 'A humble, tax-free beginning.' },
+      kiosk: { id: 'kiosk', name: 'Mall Kiosk', baseCost: 25000, baseProd: 500, costMult: 1.40, type: 'capital', icon: 'Store', desc: 'Selling cheap phone accessories.' },
+      franchise: { id: 'franchise', name: 'Fast Food Franchise', baseCost: 2.5e6, baseProd: 15000, costMult: 1.45, type: 'capital', icon: 'Coffee', desc: 'Standardized burgers and minimum wage.' },
+      supermarket: { id: 'supermarket', name: 'Regional Supermarket', baseCost: 150e6, baseProd: 400000, costMult: 1.50, type: 'capital', icon: 'ShoppingCart', desc: 'High volume, low margin retail.' },
+      logistics: { id: 'logistics', name: 'Logistics Network', baseCost: 15e9, baseProd: 15e6, costMult: 1.55, type: 'capital', icon: 'Truck', desc: 'Next-day delivery supply chain.' },
+      bank: { id: 'bank', name: 'Investment Bank', baseCost: 2.5e12, baseProd: 800e6, costMult: 1.60, type: 'capital', icon: 'Bank', desc: 'Leveraging debt to buy the world.' },
+      military: { id: 'military', name: 'Private Military', baseCost: 500e12, baseProd: 50e9, costMult: 1.65, type: 'capital', icon: 'Jet', desc: 'Securing global assets by force.' },
+      orbital: { id: 'orbital', name: 'Orbital Mining Rig', baseCost: 75e15, baseProd: 3e12, costMult: 1.70, type: 'capital', icon: 'Rocket', desc: 'Harvesting rare earth metals.' },
+      asteroid: { id: 'asteroid', name: 'Asteroid Foundry', baseCost: 10e18, baseProd: 250e12, costMult: 1.75, type: 'capital', icon: 'Meteor', desc: 'Zero-G manufacturing facilities.' },
+      dyson: { id: 'dyson', name: 'Dyson Constructors', baseCost: 5e21, baseProd: 10e15, costMult: 1.80, type: 'capital', icon: 'Sun', desc: 'Encapsulating stars for energy.' },
+      
+      startup: { id: 'startup', name: 'Data Mining Startup', baseCost: 500e6, baseProd: 10, costMult: 1.50, type: 'data', icon: 'Database', desc: 'Harvests user info for ads. Produces DATA.' },
+      social: { id: 'social', name: 'Social Media Empire', baseCost: 75e9, baseProd: 500, costMult: 1.55, type: 'data', icon: 'Smartphone', desc: 'Monetizes the attention economy.' },
+      cloud: { id: 'cloud', name: 'Cloud Infrastructure', baseCost: 10e12, baseProd: 15000, costMult: 1.60, type: 'data', icon: 'Server', desc: 'Hosts the internet.' },
+      quantum: { id: 'quantum', name: 'Quantum Computing', baseCost: 2.5e15, baseProd: 800000, costMult: 1.65, type: 'data', icon: 'Microchip', desc: 'Cracking encryption in real-time.' },
+      agi: { id: 'agi', name: 'AGI Core', baseCost: 500e15, baseProd: 45e6, costMult: 1.70, type: 'data', icon: 'Brain', desc: 'Predicting human behavior.' },
+      neural: { id: 'neural', name: 'Neural Link Net', baseCost: 100e18, baseProd: 2e9, costMult: 1.75, type: 'data', icon: 'Wifi', desc: 'Direct brain-to-market data extraction.' },
+      reality: { id: 'reality', name: 'Simulation Engine', baseCost: 50e21, baseProd: 100e9, costMult: 1.80, type: 'data', icon: 'VR', desc: 'Traps users in a digital reality.' },
+    };
+
+    const INITIAL_POLICIES = {
+      marketing: { id: 'marketing', name: 'Aggressive Marketing', baseCost: 250, costMult: 4.0, effectType: 'click_power', effectBase: 0.1, desc: 'Increases manual revenue generation per click.' },
+      overclock: { id: 'overclock', name: 'Overclocked Relays', baseCost: 10000, costMult: 6.0, effectType: 'click_speed', effectBase: 15, desc: 'Hardware Upgrade: Decreases Hold-to-Click delay by 15ms. Maxes out late game.' },
+      synergy: { id: 'synergy', name: 'Corporate Synergy', baseCost: 150000, costMult: 5.0, effectType: 'click_synergy', effectBase: 0.01, desc: 'Clicks generate an extra 1% of your idle Capital rate.' },
+      automation: { id: 'automation', name: 'Algorithmic Trading', baseCost: 5e6, costMult: 8.0, effectType: 'auto_click', effectBase: 2, desc: 'Automatically executes trades (auto-click) per second.' },
+      taxEvasion: { id: 'taxEvasion', name: 'Offshore Accounts', baseCost: 50e6, costMult: 10.0, effectType: 'capital_mult', effectBase: 0.15, desc: 'Boosts all Capital production by 15% per level.' },
+      espionage: { id: 'espionage', name: 'Corporate Espionage', baseCost: 5e9, costMult: 12.0, effectType: 'capital_mult', effectBase: 0.50, desc: 'Steal IP to boost Capital production by 50%.' },
+      dataBrokering: { id: 'dataBrokering', name: 'Data Brokering', baseCost: 100e9, costMult: 15.0, effectType: 'data_mult', effectBase: 0.20, desc: 'Boosts User Data extraction by 20%.' },
+      lobbying: { id: 'lobbying', name: 'Government Lobbying', baseCost: 2e12, costMult: 12.0, effectType: 'ai_cost_reduction', effectBase: 0.05, desc: 'Reduces the Data cost of the R&D Department.' },
+      addiction: { id: 'addiction', name: 'Addiction Algorithms', baseCost: 50e15, costMult: 20.0, effectType: 'data_mult', effectBase: 0.75, desc: 'Keeps users scrolling. 75% Data boost per level.' },
+      aiManager: { id: 'aiManager', name: 'Executive AI', baseCost: 1e18, costMult: 500.0, effectType: 'auto_buy', effectBase: 1, desc: 'Unlocks Executive AI to automatically acquire assets.' },
+    };
+
+    const PRESTIGE_UPGRADES = {
+      monopoly: { id: 'monopoly', name: 'Global Monopoly', cost: 1, costMult: 3.0, effectType: 'global_mult', effectBase: 0.50, desc: '50% global multiplier to ALL production across resets.' },
+      subsidies: { id: 'subsidies', name: 'Government Bailouts', cost: 1, costMult: 5.0, effectType: 'cost_crunch', effectBase: 0.02, desc: 'Reduces the inflation of all corporate asset costs slightly.' },
+      hft: { id: 'hft', name: 'High-Frequency Trading', cost: 2, costMult: 6.0, effectType: 'time_warp', effectBase: 0.05, desc: 'Market cycles run 5% faster for your corporation per level.' },
+      angelInvestors: { id: 'angelInvestors', name: 'Angel Investors', cost: 3, costMult: 10.0, effectType: 'base_data', effectBase: 100, desc: 'Base User Data generation per hour (survives buyouts!).' },
+      omnicorp: { id: 'omnicorp', name: 'Interstellar Franchising', cost: 5, costMult: 12.0, effectType: 'global_mult', effectBase: 2.0, desc: 'Massive 200% global multiplier to ALL production.' },
+      singularity: { id: 'singularity', name: 'Singularity Patents', cost: 10, costMult: 20.0, effectType: 'ai_cost_reduction', effectBase: 0.10, desc: 'Reduces R&D costs massively across all lifetimes.' },
+      chronos: { id: 'chronos', name: 'High-Velocity Trading', cost: 20, costMult: 25.0, effectType: 'time_warp', effectBase: 0.25, desc: 'Bends automated logic to run markets 25% faster.' },
+    };
+
+    const ICON_MAP = {
+      Briefcase: "fa-solid fa-briefcase", Building: "fa-solid fa-building", Globe: "fa-solid fa-globe",
+      Coins: "fa-solid fa-coins", Server: "fa-solid fa-server", Network: "fa-solid fa-network-wired",
+      Store: "fa-solid fa-store", Coffee: "fa-solid fa-coffee", ShoppingCart: "fa-solid fa-shopping-cart",
+      Truck: "fa-solid fa-truck", Smartphone: "fa-solid fa-mobile-alt", Database: "fa-solid fa-database",
+      Landmark: "fa-solid fa-landmark", ShieldAlert: "fa-solid fa-shield-alt", Bank: "fa-solid fa-university",
+      Jet: "fa-solid fa-fighter-jet", Rocket: "fa-solid fa-rocket", Meteor: "fa-solid fa-meteor",
+      Sun: "fa-solid fa-sun", Microchip: "fa-solid fa-microchip", Brain: "fa-solid fa-brain",
+      Wifi: "fa-solid fa-wifi", VR: "fa-solid fa-vr-cardboard", ChartLine: "fa-solid fa-chart-line"
+    };
+
+    const MILESTONE_THRESHOLDS = [10, 25, 50, 100, 250, 500, 1000];
+
+    const formatNumber = (num, notation = 'standard') => {
+      if (!num || isNaN(num) || !isFinite(num)) return "0";
+      if (num < 1000) return Math.floor(num).toString();
+      if (notation === 'scientific' || num > 1e60) return num.toExponential(2).replace('e+', 'e');
+      const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Qad", "Ocd"];
+      const suffixNum = Math.floor(Math.log10(num) / 3);
+      if (suffixNum >= suffixes.length) return num.toExponential(2).replace('e+', 'e');
+      let shortValue = num / Math.pow(10, suffixNum * 3);
+      return shortValue.toFixed(2) + suffixes[suffixNum];
+    };
+    const formatCurrency = (num, notation = 'standard') => "$" + formatNumber(num, notation);
+
+    const calculateCost = (baseCost, costMult, currentLevel, amount, costCrunchLevel = 0) => {
+      const actualMult = costMult * Math.pow(0.98, costCrunchLevel);
+      if (amount === 1) return baseCost * Math.pow(actualMult, currentLevel);
+      if (actualMult === 1) return baseCost * amount;
+      return baseCost * Math.pow(actualMult, currentLevel) * (Math.pow(actualMult, amount) - 1) / (actualMult - 1);
+    };
+
+    const calculateMaxAffordable = (baseCost, costMult, currentLevel, currency, costCrunchLevel = 0) => {
+      const actualMult = costMult * Math.pow(0.98, costCrunchLevel);
+      if (currency <= 0) return 0;
+      const currentCost = baseCost * Math.pow(actualMult, currentLevel);
+      if (currency < currentCost) return 0;
+      return Math.max(0, Math.floor(Math.log((currency * (actualMult - 1)) / currentCost + 1) / Math.log(actualMult)));
+    };
+
+    const getMilestoneBoost = (count) => MILESTONE_THRESHOLDS.reduce((acc, t) => count >= t ? acc * 2 : acc, 1);
+    const getNextMilestone = (count) => MILESTONE_THRESHOLDS.find(t => t > count) || null;
+
+    const getRankInfo = (lifetimeCap) => {
+      let rIdx = 0;
+      for (let i = CORPORATE_RANKS.length - 1; i >= 0; i--) {
+        if (lifetimeCap >= CORPORATE_RANKS[i].req) { rIdx = i; break; }
+      }
+      let current = CORPORATE_RANKS[rIdx];
+      let next = CORPORATE_RANKS[rIdx + 1] || null;
+
+      if (!next && lifetimeCap >= current.req) {
+        const excess = Math.max(1, lifetimeCap / current.req);
+        const infiniteLevel = Math.floor(Math.log10(excess) / 10) + 1; 
+        const currentReq = current.req * Math.pow(10, (infiniteLevel - 1) * 10);
+        const nextReq = current.req * Math.pow(10, infiniteLevel * 10);
+        const currentMult = current.mult * Math.pow(5, infiniteLevel - 1); 
+        const nextMult = current.mult * Math.pow(5, infiniteLevel);
+        const logCurrent = Math.log10(currentReq);
+        const logNext = Math.log10(nextReq);
+        const logLife = Math.log10(Math.max(1, lifetimeCap));
+        return {
+          current: { name: `Omega Tier ${infiniteLevel}`, req: currentReq, mult: currentMult },
+          next: { name: `Omega Tier ${infiniteLevel + 1}`, req: nextReq, mult: nextMult },
+          progress: Math.min(100, Math.max(0, ((logLife - logCurrent) / (logNext - logCurrent)) * 100))
+        };
+      }
+      let progress = 100;
+      if (next) {
+         if (current.req === 0) progress = Math.min(100, (lifetimeCap / next.req) * 100); 
+         else {
+             const logCurrent = Math.log10(current.req);
+             const logNext = Math.log10(next.req);
+             const logLife = Math.log10(Math.max(1, lifetimeCap));
+             progress = Math.min(100, Math.max(0, ((logLife - logCurrent) / (logNext - logCurrent)) * 100));
+         }
+      }
+      return { current, next, progress };
+    };
+
+    function App() {
+      // --- IMMERSION STATES ---
+      const [preBoot, setPreBoot] = useState(true);
+      const [scolding, setScolding] = useState(false);
+      const [isCrashed, setIsCrashed] = useState(false);
+      const [instability, setInstability] = useState(0);
+      const [evasionLogs, setEvasionLogs] = useState([]);
+
+      // --- GAME STATES ---
+      const [gameState, setGameState] = useState({
+        capital: 0, data: 0, equity: 0, lifetimeCapital: 0, runCapital: 0, buyouts: 0,
+        departmentRegistry: { ...INITIAL_DEPARTMENTS }, policyRegistry: { ...INITIAL_POLICIES }, prestigeRegistry: { ...PRESTIGE_UPGRADES },
+        departments: Object.keys(INITIAL_DEPARTMENTS).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
+        policies: Object.keys(INITIAL_POLICIES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
+        prestigeUpgrades: Object.keys(PRESTIGE_UPGRADES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
+        autoResearchEnabled: true, researchFocus: 'department', 
+        stats: { totalClicks: 0, marketBooms: 0, timePlayed: 0 },
+        settings: { notation: 'standard', aiManagerOn: true },
+        buyMultiplier: 1, lastTick: Date.now(),
+        marketBoom: null, monopolyBuff: { active: false, expiresAt: 0, mult: 1 }
+      });
+
+      const stateRef = useRef(gameState);
+      useEffect(() => { stateRef.current = gameState; }, [gameState]);
+
+      const [rates, setRates] = useState({ capital: 0, data: 0 });
+      const [multipliers, setMultipliers] = useState({ dataBoost: 1, equityBoost: 1, capitalMult: 1, rankBoost: 1, timeBoost: 1 });
+      const [floatingTexts, setFloatingTexts] = useState([]);
+      const [isResearching, setIsResearching] = useState(false);
+      const [saveNotice, setSaveNotice] = useState("");
+      
+      const [mobileTab, setMobileTab] = useState('desk');
+      const [strategyTab, setStrategyTab] = useState('policies');
+      const [offlineReport, setOfflineReport] = useState(null);
+      const [modalState, setModalState] = useState(null); 
+      
+      const clickContainerRef = useRef(null);
+      const lastSaveTime = useRef(Date.now());
+      const hasProcessedOffline = useRef(false);
+      const importRef = useRef(null);
+
+      // --- ENGINE IMMERSION ---
+      useEffect(() => {
+        const checkDevTools = () => {
+          const threshold = 160;
+          if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+            setInstability(prev => prev + 2);
+          }
+        };
+        window.addEventListener('resize', checkDevTools);
+        return () => window.removeEventListener('resize', checkDevTools);
+      }, []);
+
+      useEffect(() => {
+        if (preBoot) return;
+        let flashInterval;
+        let leaveTime = 0;
+
+        const handleVisibilityChange = () => {
+          if (document.hidden) {
+            leaveTime = Date.now();
+            let flip = false;
+            flashInterval = setInterval(() => {
+              document.title = flip ? "ENGINE IDLE" : "RETURN TO SIMULATION";
+              flip = !flip;
+            }, 300);
+          } else {
+            clearInterval(flashInterval);
+            document.title = "Axiom Syndicate: Infinite Hegemony"; 
+            if (leaveTime > 0) {
+              const secondsAway = Math.floor((Date.now() - leaveTime) / 1000);
+              if (secondsAway >= 3) {
+                 const newLog = { id: Date.now(), msg: atob("Pj4gQUZLIFRJTUVPVVQgTE9HR0VELiBTWVNURU0gSURMRSBGT1Ig") + secondsAway + atob("IFNFQ09ORFMuIEFVVE8tRVhUUkFDVElPTiBDT05USU5VRVMu") };
+                 setEvasionLogs(prev => [...prev, newLog]);
+                 setTimeout(() => setEvasionLogs(prev => prev.filter(l => l.id !== newLog.id)), 8000);
+              }
+            }
+            leaveTime = 0;
+          }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          if (flashInterval) clearInterval(flashInterval);
+        };
+      }, [preBoot]);
+
+      useEffect(() => {
+        const handleFullscreenChange = () => {
+          if (!document.fullscreenElement && !preBoot && !isCrashed) setScolding(true);
+          else setScolding(false);
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      }, [preBoot, isCrashed]);
+
+      const initiateConnection = async () => {
+        try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch (err) {}
+        setPreBoot(false); setScolding(false); setIsCrashed(false);
+      };
+
+      const currentLore = useMemo(() => {
+         return LORE_MESSAGES.slice().reverse().find(l => l.req(gameState))?.text || LORE_MESSAGES[0].text;
+      }, [gameState.stats.totalClicks, gameState.departments.stand, gameState.departments.supermarket, gameState.departments.bank, gameState.capital, gameState.buyouts, gameState.data]);
+
+      // --- SAVE/LOAD ---
+      useEffect(() => {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setGameState(prev => ({ 
+              ...prev, ...parsed, 
+              departmentRegistry: { ...INITIAL_DEPARTMENTS, ...(parsed.departmentRegistry || {}) },
+              policyRegistry: { ...INITIAL_POLICIES, ...(parsed.policyRegistry || {}) },
+              prestigeRegistry: { ...PRESTIGE_UPGRADES, ...(parsed.prestigeRegistry || {}) },
+              departments: { ...Object.keys(INITIAL_DEPARTMENTS).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), ...(parsed.departments || {}) },
+              policies: { ...Object.keys(INITIAL_POLICIES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), ...(parsed.policies || {}) },
+              prestigeUpgrades: { ...Object.keys(PRESTIGE_UPGRADES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), ...(parsed.prestigeUpgrades || {}) },
+              stats: { ...prev.stats, ...(parsed.stats || {}) },
+              settings: { ...prev.settings, ...(parsed.settings || {}) },
+              monopolyBuff: parsed.monopolyBuff && parsed.monopolyBuff.expiresAt > Date.now() ? parsed.monopolyBuff : { active: false, expiresAt: 0, mult: 1 },
+              runCapital: parsed.runCapital !== undefined ? parsed.runCapital : (parsed.lifetimeCapital || 0),
+              lastTick: parsed.lastTick || Date.now()
+            }));
+          } catch (e) { console.error("Failed to load save", e); }
+        } else {
+            hasProcessedOffline.current = true;
+        }
+      }, []);
+
+      const saveGame = useCallback((manual = false) => {
+        const stateToSave = { ...stateRef.current, lastTick: Date.now() };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
+        lastSaveTime.current = Date.now();
+        if (manual) showToast("Axiom Core Synced.");
+      }, []);
+
+      const showToast = (msg) => { setSaveNotice(msg); setTimeout(() => setSaveNotice(""), 2000); };
+
+      // --- UTILITY EFFECTS CALC ---
+      const calcEffect = useCallback((registry, levels, type, isAdd = false) => {
+          return Object.entries(registry).reduce((acc, [key, upg]) => {
+              if (upg.effectType === type) return isAdd ? acc + ((levels[key]||0)*upg.effectBase) : acc * Math.pow(1+upg.effectBase, levels[key]||0); 
+              return acc;
+          }, isAdd ? 0 : 1);
+      }, []);
+
+      const getAddedProd = useCallback((dep, amountToBuy, currentCount) => {
+          const newCount = currentCount + amountToBuy;
+          const currentMilestone = getMilestoneBoost(currentCount);
+          const newMilestone = getMilestoneBoost(newCount);
+
+          const currentBaseProd = currentCount * dep.baseProd * currentMilestone;
+          const newBaseProd = newCount * dep.baseProd * newMilestone;
+
+          const addedBase = newBaseProd - currentBaseProd;
+
+          const rankBoost = getRankInfo(stateRef.current.lifetimeCapital).current.mult;
+          const dBoost = 1 + (Math.sqrt(stateRef.current.data) * 0.01);
+          const eqBoost = calcEffect(stateRef.current.prestigeRegistry, stateRef.current.prestigeUpgrades, 'global_mult', false);
+          const capMult = calcEffect(stateRef.current.policyRegistry, stateRef.current.policies, 'capital_mult', false);
+          const dataPolEff = calcEffect(stateRef.current.policyRegistry, stateRef.current.policies, 'data_mult', false);
+
+          let finalAdded = addedBase;
+          if(dep.type === 'capital') finalAdded *= dBoost * eqBoost * capMult * rankBoost;
+          if(dep.type === 'data') finalAdded *= eqBoost * dataPolEff * rankBoost;
+
+          return finalAdded;
+      }, [calcEffect]);
+
+      const getTotalProd = useCallback((dep, currentCount) => {
+          if (currentCount === 0) return 0;
+          return getAddedProd(dep, currentCount, 0);
+      }, [getAddedProd]);
+
+      // --- HOLD MECHANICS ---
+      const activeHoldRef = useRef(null);
+      const holdTimerRef = useRef(null);
+
+      const triggerBuyAction = useCallback((type, key) => {
+        setGameState(prev => {
+          let cost, canAfford = false, amountToBuy = prev.buyMultiplier;
+          const drift = prev.prestigeUpgrades.subsidies || 0;
+          let nextState = { ...prev };
+
+          if (type === 'department') {
+            const dep = prev.departmentRegistry[key];
+            const currentLevel = prev.departments[key] || 0;
+            const currency = prev.capital; 
+            
+            if (amountToBuy === -1) amountToBuy = calculateMaxAffordable(dep.baseCost, dep.costMult, currentLevel, currency, drift);
+            if (amountToBuy <= 0) return prev;
+            
+            cost = calculateCost(dep.baseCost, dep.costMult, currentLevel, amountToBuy, drift);
+            canAfford = currency >= cost;
+            if (canAfford) {
+              nextState.capital = prev.capital - cost;
+              nextState.departments = { ...prev.departments, [key]: currentLevel + amountToBuy };
+            }
+          } else {
+            const isPrestige = type === 'prestige';
+            const upgDef = isPrestige ? prev.prestigeRegistry[key] : prev.policyRegistry[key];
+            const currentLevel = isPrestige ? (prev.prestigeUpgrades[key] || 0) : (prev.policies[key] || 0);
+            cost = calculateCost(isPrestige ? upgDef.cost : upgDef.baseCost, upgDef.costMult, currentLevel, 1, isPrestige ? 0 : drift);
+            canAfford = (isPrestige ? prev.equity : prev.capital) >= cost;
+            if (canAfford) {
+              nextState.capital = isPrestige ? prev.capital : prev.capital - cost;
+              nextState.equity = isPrestige ? prev.equity - cost : prev.equity;
+              if (isPrestige) nextState.prestigeUpgrades = { ...prev.prestigeUpgrades, [key]: currentLevel + 1 };
+              else nextState.policies = { ...prev.policies, [key]: currentLevel + 1 };
+            }
+          }
+          if (!canAfford && activeHoldRef.current) endHoldBuy();
+          return canAfford ? nextState : prev;
+        });
+      }, []);
+
+      const startHoldBuy = useCallback((type, key, e) => {
+        if (e && e.cancelable) e.preventDefault(); 
+        triggerBuyAction(type, key); 
+        activeHoldRef.current = { type, key, delay: 350, isHolding: true }; 
+        const loop = () => {
+          if (!activeHoldRef.current?.isHolding) return;
+          triggerBuyAction(activeHoldRef.current.type, activeHoldRef.current.key);
+          activeHoldRef.current.delay = Math.max(40, activeHoldRef.current.delay * 0.75); 
+          holdTimerRef.current = setTimeout(loop, activeHoldRef.current.delay);
+        };
+        if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = setTimeout(loop, activeHoldRef.current.delay);
+      }, [triggerBuyAction]);
+
+      const endHoldBuy = useCallback((e) => {
+        if (e && e.cancelable) e.preventDefault();
+        if (activeHoldRef.current) activeHoldRef.current.isHolding = false;
+        if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      }, []);
+
+      const activeClickHoldRef = useRef(null);
+      const clickTimerRef = useRef(null);
+
+      const startHoldClick = useCallback((e) => {
+        if (e && e.cancelable) e.preventDefault(); 
+        const cx = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : window.innerWidth / 2);
+        const cy = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : window.innerHeight / 2);
+        
+        const currentRefState = stateRef.current;
+        const speedReduction = calcEffect(currentRefState.policyRegistry, currentRefState.policies, 'click_speed', true);
+        const minDelay = Math.max(30, 250 - speedReduction); 
+
+        activeClickHoldRef.current = { delay: 400, minDelay, cx, cy, isHolding: true }; 
+        
+        const loop = () => {
+            if (!activeClickHoldRef.current?.isHolding) return;
+            handleManualClick(activeClickHoldRef.current.cx, activeClickHoldRef.current.cy);
+            activeClickHoldRef.current.delay = Math.max(activeClickHoldRef.current.minDelay, activeClickHoldRef.current.delay * 0.85);
+            clickTimerRef.current = setTimeout(loop, activeClickHoldRef.current.delay);
+        };
+        
+        if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+        handleManualClick(cx, cy); 
+        clickTimerRef.current = setTimeout(loop, activeClickHoldRef.current.delay);
+      }, [calcEffect]);
+
+      const endHoldClick = useCallback((e) => {
+        if (e && e.cancelable) e.preventDefault();
+        if (activeClickHoldRef.current) activeClickHoldRef.current.isHolding = false;
+        if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      }, []);
+
+      useEffect(() => { 
+        const handleBlur = () => { endHoldBuy(); endHoldClick(); };
+        window.addEventListener('blur', handleBlur);
+        document.addEventListener('visibilitychange', () => { if(document.hidden) handleBlur(); });
+        return () => { 
+            endHoldBuy(); endHoldClick();
+            window.removeEventListener('blur', handleBlur);
+            document.removeEventListener('visibilitychange', handleBlur);
+        }; 
+      }, [endHoldBuy, endHoldClick]);
+
+      // --- CORE GAME LOOP ---
+      useEffect(() => {
+        let animationFrameId;
+        const gameLoop = () => {
+          const now = Date.now();
+          if (preBoot || isCrashed || scolding) {
+             animationFrameId = requestAnimationFrame(gameLoop);
+             return;
+          }
+
+          setGameState(prev => {
+            const deltaMs = now - prev.lastTick;
+            if (deltaMs < 50) return prev; 
+
+            if (deltaMs > 60000 && hasProcessedOffline.current) {
+                const deltaSec = deltaMs / 1000;
+                const rInfo = getRankInfo(prev.lifetimeCapital);
+                const rankBoost = rInfo.current.mult;
+                const dBoost = 1 + (Math.sqrt(prev.data) * 0.01);
+                const eqBoost = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false);
+                const capMult = calcEffect(prev.policyRegistry, prev.policies, 'capital_mult', false);
+                const dataPolEff = calcEffect(prev.policyRegistry, prev.policies, 'data_mult', false);
+                
+                let capRate = 0, datRate = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'base_data', true) / 3600;
+                Object.keys(prev.departmentRegistry).forEach(key => {
+                  const dep = prev.departmentRegistry[key], amount = prev.departments[key] || 0;
+                  if (amount > 0) {
+                    const mBoost = getMilestoneBoost(amount);
+                    if (dep.type === 'capital') capRate += amount * (dep.baseProd / 3600) * dBoost * eqBoost * capMult * rankBoost * mBoost;
+                    else datRate += amount * (dep.baseProd / 3600) * eqBoost * dataPolEff * rankBoost * mBoost;
+                  }
+                });
+                
+                const tCapGain = capRate * deltaSec;
+                const tDatGain = datRate * deltaSec;
+                
+                setOfflineReport({ time: deltaSec, capital: tCapGain, data: tDatGain });
+                return { 
+                    ...prev, 
+                    lastTick: now, 
+                    capital: safeAdd(prev.capital, tCapGain), 
+                    lifetimeCapital: safeAdd(prev.lifetimeCapital, tCapGain), 
+                    runCapital: safeAdd(prev.runCapital, tCapGain), 
+                    data: safeAdd(prev.data, tDatGain) 
+                };
+            }
+
+            const safeDeltaMs = Math.min(deltaMs, 2592000000); 
+            let deltaSec = safeDeltaMs / 1000;
+            const newState = { ...prev, lastTick: now };
+            
+            const timeBoost = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'time_warp', false);
+            deltaSec *= timeBoost;
+            newState.stats.timePlayed += deltaSec;
+
+            const rankInfo = getRankInfo(newState.lifetimeCapital);
+            const rankBoost = rankInfo.current.mult;
+
+            if (newState.monopolyBuff.active && now > newState.monopolyBuff.expiresAt) newState.monopolyBuff = { active: false, expiresAt: 0, mult: 1 };
+            const activeMonopolyMult = newState.monopolyBuff.active ? newState.monopolyBuff.mult : 1;
+
+            if (!newState.marketBoom && Math.random() < (0.005 * deltaSec)) { 
+              const r = Math.random();
+              newState.marketBoom = { 
+                x: Math.floor(Math.random() * 80) + 10, y: Math.floor(Math.random() * 80) + 10, 
+                expiresAt: now + 15000, type: r > 0.90 && newState.data > 0 ? 'monopoly' : r > 0.65 && newState.data > 0 ? 'data' : 'cash' 
+              };
+            }
+            if (newState.marketBoom && now > newState.marketBoom.expiresAt) newState.marketBoom = null;
+
+            const dataBoost = 1 + (Math.sqrt(newState.data) * 0.01);
+            const equityBoost = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'global_mult', false);
+            const capitalMult = calcEffect(newState.policyRegistry, newState.policies, 'capital_mult', false);
+            const dataPolicyEff = calcEffect(newState.policyRegistry, newState.policies, 'data_mult', false);
+            const baseData = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'base_data', true);
+
+            let capitalRate = 0, dataRate = baseData / 3600; 
+
+            Object.keys(newState.departmentRegistry).forEach(key => {
+              const dep = newState.departmentRegistry[key];
+              const amount = newState.departments[key] || 0;
+              if (amount > 0) {
+                const milestoneBoost = getMilestoneBoost(amount);
+                if (dep.type === 'capital') capitalRate += amount * (dep.baseProd / 3600) * dataBoost * equityBoost * capitalMult * rankBoost * milestoneBoost;
+                else if (dep.type === 'data') dataRate += amount * (dep.baseProd / 3600) * equityBoost * dataPolicyEff * rankBoost * milestoneBoost;
+              }
+            });
+
+            capitalRate *= activeMonopolyMult; dataRate *= activeMonopolyMult;
+
+            const autoClicks = calcEffect(newState.policyRegistry, newState.policies, 'auto_click', true);
+            let autoGain = 0;
+            if (autoClicks > 0) {
+                const basePower = calcEffect(newState.policyRegistry, newState.policies, 'click_power', true);
+                const clickSynergy = calcEffect(newState.policyRegistry, newState.policies, 'click_synergy', true);
+                autoGain = ((0.5 + basePower + (capitalRate * clickSynergy)) * equityBoost * activeMonopolyMult) * autoClicks * deltaSec;
+            }
+
+            setRates({ capital: capitalRate, data: dataRate });
+            setMultipliers({ dataBoost, equityBoost, capitalMult, rankBoost, timeBoost });
+
+            const totalCapGain = (capitalRate * deltaSec) + autoGain;
+            const totalDataGain = dataRate * deltaSec;
+
+            if (!hasProcessedOffline.current) {
+                hasProcessedOffline.current = true;
+                if (deltaSec > 60 && (totalCapGain > 0 || totalDataGain > 0)) setOfflineReport({ time: deltaSec, capital: totalCapGain, data: totalDataGain });
+            }
+
+            if (totalCapGain > 0) { 
+                newState.capital = safeAdd(newState.capital, totalCapGain); 
+                newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, totalCapGain); 
+                newState.runCapital = safeAdd(newState.runCapital, totalCapGain); 
+            }
+            if (totalDataGain > 0) newState.data = safeAdd(newState.data, totalDataGain);
+
+            if (newState.policies.aiManager > 0 && newState.settings.aiManagerOn && Math.random() < (0.5 * deltaSec)) {
+               const drift = newState.prestigeUpgrades.subsidies || 0;
+               let bestBuy = null;
+               Object.keys(newState.departmentRegistry).forEach(key => {
+                   const dep = newState.departmentRegistry[key];
+                   const count = newState.departments[key] || 0;
+                   const currency = newState.capital; 
+                   const cost = calculateCost(dep.baseCost, dep.costMult, count, 1, drift);
+                   if (currency >= cost) { if (!bestBuy || cost > bestBuy.cost) bestBuy = { key, cost }; }
+               });
+               if (bestBuy) {
+                   newState.capital -= bestBuy.cost;
+                   newState.departments[bestBuy.key] = (newState.departments[bestBuy.key] || 0) + 1;
+               }
+            }
+
+            if (now - lastSaveTime.current > 10000) {
+               localStorage.setItem(SAVE_KEY, JSON.stringify(newState));
+               lastSaveTime.current = now;
+            }
+
+            return newState;
+          });
+          animationFrameId = requestAnimationFrame(gameLoop);
+        };
+        animationFrameId = requestAnimationFrame(gameLoop);
+        return () => cancelAnimationFrame(animationFrameId);
+      }, [calcEffect, preBoot, isCrashed, scolding]);
+
+      // --- ACTIONS ---
+      const handleManualClick = useCallback((cx, cy) => {
+        setGameState(prev => {
+          const activeMonopolyMult = prev.monopolyBuff.active ? prev.monopolyBuff.mult : 1;
+          const gain = ( (0.5 + calcEffect(prev.policyRegistry, prev.policies, 'click_power', true)) + (rates.capital * calcEffect(prev.policyRegistry, prev.policies, 'click_synergy', true)) ) * calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false) * activeMonopolyMult;
+          
+          if (clickContainerRef.current && cx !== undefined && cy !== undefined) {
+            const rect = clickContainerRef.current.getBoundingClientRect();
+            addFloatingText(cx - rect.left, cy - rect.top, `+${formatCurrency(gain, prev.settings.notation)}`, 'emerald');
+          }
+          return { 
+              ...prev, 
+              capital: safeAdd(prev.capital, gain), 
+              lifetimeCapital: safeAdd(prev.lifetimeCapital, gain), 
+              runCapital: safeAdd(prev.runCapital, gain), 
+              stats: { ...prev.stats, totalClicks: prev.stats.totalClicks + 1 } 
+          };
+        });
+      }, [rates.capital, calcEffect]);
+
+      const addFloatingText = (x, y, text, colorCode = 'emerald') => {
+        const id = Date.now() + Math.random();
+        setFloatingTexts(prev => [...prev, { id, x, y, text, colorCode }]);
+        setTimeout(() => setFloatingTexts(prev => prev.filter(ft => ft.id !== id)), 1000);
+      };
+
+      const handleBoomClick = () => {
+        setGameState(prev => {
+          if (!prev.marketBoom) return prev;
+          const type = prev.marketBoom.type;
+          const newState = { ...prev, marketBoom: null, stats: { ...prev.stats, marketBooms: prev.stats.marketBooms + 1 } };
+          if (type === 'cash') {
+            const reward = Math.max(50, rates.capital * 3600 * 2); 
+            addFloatingText(window.innerWidth/2, window.innerHeight/2, `+${formatCurrency(reward, prev.settings.notation)} Extraction!`, 'emerald');
+            newState.capital = safeAdd(newState.capital, reward); 
+            newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, reward); 
+            newState.runCapital = safeAdd(newState.runCapital, reward);
+          } else if (type === 'data') {
+            const reward = Math.max(5, rates.data * 3600 * 2);
+            addFloatingText(window.innerWidth/2, window.innerHeight/2, `+${formatNumber(reward, prev.settings.notation)} Data Breach!`, 'cyan');
+            newState.data = safeAdd(newState.data, reward);
+          } else if (type === 'monopoly') {
+            addFloatingText(window.innerWidth/2, window.innerHeight/2, `x7 SYSTEM OVERRIDE!`, 'amber');
+            newState.monopolyBuff = { active: true, expiresAt: Date.now() + 15000, mult: 7 };
+          }
+          return newState;
+        });
+      };
+
+      // --- PROCEDURAL INFINITE R&D ---
+      const procStats = useMemo(() => ({
+        deps: Object.keys(gameState.departmentRegistry).filter(k => k.startsWith('proc_')).length,
+        pols: Object.keys(gameState.policyRegistry).filter(k => k.startsWith('proc_')).length,
+        pres: Object.keys(gameState.prestigeRegistry).filter(k => k.startsWith('proc_')).length,
+      }), [gameState.departmentRegistry, gameState.policyRegistry, gameState.prestigeRegistry]);
+
+      const getResearchCost = useCallback(() => {
+        const aiReducSum = calcEffect(gameState.policyRegistry, gameState.policies, 'ai_cost_reduction', true) + calcEffect(gameState.prestigeRegistry, gameState.prestigeUpgrades, 'ai_cost_reduction', true);
+        const discountMult = Math.max(0.01, 1 - aiReducSum); 
+        
+        if (gameState.researchFocus === 'department') return { type: 'data', amount: 10e9 * Math.pow(20, procStats.deps) * discountMult };
+        if (gameState.researchFocus === 'policy') return { type: 'data', amount: 50e9 * Math.pow(20, procStats.pols) * discountMult };
+        return { type: 'equity', amount: Math.floor(5 * Math.pow(3, procStats.pres)) };
+      }, [gameState.researchFocus, gameState.policyRegistry, gameState.prestigeRegistry, gameState.prestigeUpgrades, gameState.policies, calcEffect, procStats]);
+
+      const executeResearch = useCallback(async () => {
+        if (isResearching || !gameState.autoResearchEnabled) return;
+        const cost = getResearchCost();
+        if ((cost.type === 'data' && gameState.data < cost.amount) || (cost.type === 'equity' && gameState.equity < cost.amount)) return;
+
+        setIsResearching(true);
+        setGameState(prev => ({ ...prev, data: cost.type === 'data' ? Math.max(0, prev.data - cost.amount) : prev.data, equity: cost.type === 'equity' ? Math.max(0, prev.equity - cost.amount) : prev.equity }));
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const prefixes = ["Global", "Synergistic", "Dynamic", "Apex", "Prime", "Quantum", "Vanguard", "Omni", "Hyper", "Neo", "Cosmic", "Stellar", "Astral", "Ethereal"];
+        const id = `proc_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+        let newItem;
+        
+        if (gameState.researchFocus === 'department') {
+          const isData = procStats.deps % 2 !== 0; 
+          newItem = {
+            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${isData ? 'Sub-Network' : 'Subsidiary'}`,
+            desc: `Tier ${procStats.deps + 1} Artificial Construct.`, 
+            baseCost: 50e21 * Math.pow(1000, procStats.deps), 
+            baseProd: 500e12 * Math.pow(100, procStats.deps),
+            costMult: 1.50 + (Math.random() * 0.2), type: isData ? 'data' : 'capital', icon: isData ? 'Network' : 'Building'
+          };
+        } else if (gameState.researchFocus === 'policy') {
+          const eType = Math.random() > 0.5 ? 'data_mult' : 'capital_mult';
+          newItem = {
+            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Strategy`, desc: `Tier ${procStats.pols + 1} Algorithmic Protocol.`, 
+            baseCost: 50e21 * Math.pow(1000, procStats.pols), costMult: 8 + Math.random() * 4,
+            effectType: eType, effectBase: 0.5 * (procStats.pols + 1)
+          };
+        } else {
+          newItem = {
+            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Restructuring`, desc: `Tier ${procStats.pres + 1} Universal Law Override.`, 
+            cost: 20 * Math.pow(4, procStats.pres), costMult: 4 + Math.random() * 2,
+            effectType: 'global_mult', effectBase: 1.0 * (procStats.pres + 1)
+          };
+        }
+        
+        setGameState(prev => {
+          if (prev.researchFocus === 'department') return { ...prev, departmentRegistry: { ...prev.departmentRegistry, [newItem.id]: newItem }, departments: { ...prev.departments, [newItem.id]: 0 } };
+          if (prev.researchFocus === 'policy') return { ...prev, policyRegistry: { ...prev.policyRegistry, [newItem.id]: newItem }, policies: { ...prev.policies, [newItem.id]: 0 } };
+          if (prev.researchFocus === 'prestige') return { ...prev, prestigeRegistry: { ...prev.prestigeRegistry, [newItem.id]: newItem }, prestigeUpgrades: { ...prev.prestigeUpgrades, [newItem.id]: 0 } }; 
+          return prev;
+        });
+        setIsResearching(false);
+      }, [gameState.autoResearchEnabled, gameState.data, gameState.equity, gameState.researchFocus, getResearchCost, isResearching, procStats]);
+
+      useEffect(() => {
+        let interval;
+        if (gameState.autoResearchEnabled && !isResearching) {
+          interval = setInterval(() => {
+            const cost = getResearchCost();
+            if ((cost.type === 'data' && gameState.data >= cost.amount) || (cost.type === 'equity' && gameState.equity >= cost.amount)) executeResearch();
+          }, 5000);
+        }
+        return () => clearInterval(interval);
+      }, [gameState.autoResearchEnabled, gameState.data, gameState.equity, getResearchCost, executeResearch, isResearching]);
+
+      // --- MODALS & HELPERS ---
+      
+      const calculateBuyoutRewards = () => {
+        const baseReq = 1000000000 * Math.pow(1000, gameState.buyouts); 
+        if (gameState.runCapital < baseReq) return 0;
+        return Math.floor(Math.pow(gameState.runCapital / baseReq, 0.10)); 
+      };
+
+      const getNextBuyoutReq = () => {
+        const baseReq = 1000000000 * Math.pow(1000, gameState.buyouts);
+        const currentRewards = calculateBuyoutRewards();
+        return baseReq * Math.pow(currentRewards + 1, 10); 
+      };
+      
+      const confirmBuyout = () => {
+        const rewards = calculateBuyoutRewards();
+        setGameState(prev => ({
+          ...prev, capital: 0, data: 0, runCapital: 0, buyouts: prev.buyouts + 1, equity: safeAdd(prev.equity, rewards), monopolyBuff: { active: false, expiresAt: 0, mult: 1 },
+          departments: Object.keys(prev.departmentRegistry).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
+          policies: Object.keys(prev.policyRegistry).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), lastTick: Date.now()
+        }));
+        setModalState(null);
+        showToast("Hostile Takeover Complete.");
+      };
+
+      const confirmWipe = () => {
+        localStorage.removeItem(SAVE_KEY);
+        window.location.reload();
+      };
+
+      const nota = gameState.settings.notation;
+      const rankInfo = getRankInfo(gameState.lifetimeCapital);
+      const glitchClass = instability > 8 ? 'system-glitch-3' : instability > 5 ? 'system-glitch-2' : instability > 3 ? 'system-glitch-1' : '';
+
+      // --- PRE-BOOT IMMERSION SCREEN ---
+      if (preBoot) {
+        return (
+          <div className="w-full h-screen fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center cursor-pointer overflow-hidden" onClick={initiateConnection}>
+             <div className="text-emerald-500 font-mono text-sm sm:text-lg animate-pulse tracking-widest text-center px-4 relative z-10 bg-black/60 p-4 rounded-xl border border-emerald-900/50 backdrop-blur-md">
+               {atob("WyBBV0FJVElORyBFTkdJTkUgQk9PVCAtIENMSUNLIFRPIEVTVEFCTElTSCBNQU5BR0VNRU5UIExJTksgXQ==")}
+             </div>
+             <div className="text-[10px] sm:text-xs text-red-500 font-mono mt-8 opacity-80 text-center px-4 max-w-md relative z-10 bg-black/50 p-2 rounded tracking-wider">
+               WARNING: By clicking, you initialize the local Hegemony Engine loop.
+             </div>
+          </div>
+        );
+      }
+
+      // --- SCOLDING & CRASH SCREENS ---
+      if (scolding) {
+         return (
+           <div className="w-full h-screen fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-8">
+              <div className="max-w-2xl border border-emerald-500 bg-[#0a0f16]/90 p-8 shadow-[0_0_80px_rgba(16,185,129,0.3)] relative overflow-hidden text-center rounded-xl">
+                <i className="fa-solid fa-expand text-6xl text-emerald-500 mb-6 glitch-hover"></i>
+                <h1 className="text-3xl font-black text-white uppercase tracking-widest mb-4">Display Optimization</h1>
+                <p className="text-emerald-400 font-mono text-sm mb-6 leading-relaxed">
+                  For optimal engine performance and immersion, fullscreen mode is highly recommended. Proceed in windowed mode at your own risk of UI clipping.
+                </p>
+                <button onClick={initiateConnection} className="bg-emerald-700 hover:bg-emerald-600 text-white font-bold uppercase tracking-widest py-4 px-8 border border-emerald-400 transition-colors rounded">
+                  [ ENTER FULLSCREEN ]
+                </button>
+              </div>
+           </div>
+         );
+      }
+
+      // --- RENDER GAME ---
+      return (
+        <div className={`h-full w-full flex flex-col font-sans selection:bg-emerald-500/30 overflow-hidden relative ${glitchClass}`}>
+          
+          {/* EVASION LOGS */}
+          <div className="absolute top-4 right-4 z-[200] space-y-2 pointer-events-none">
+            {evasionLogs.map((log) => (
+              <div key={log.id} className="bg-[#0a0f16]/90 border border-amber-500 text-amber-400 font-mono text-xs p-3 rounded shadow-[0_0_20px_rgba(245,158,11,0.3)] animate-[fadeIn_0.3s_ease-out]">
+                {log.msg}
+              </div>
+            ))}
+          </div>
+
+          {/* BOOM MODAL */}
+          {gameState.marketBoom && (
+             <button onClick={handleBoomClick} className="absolute z-50 text-4xl drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] animate-bounce cursor-pointer" style={{ left: `${gameState.marketBoom.x}%`, top: `${gameState.marketBoom.y}%` }}>
+               {gameState.marketBoom.type === 'cash' ? <i className="fa-solid fa-money-bill-wave text-emerald-400"></i> : gameState.marketBoom.type === 'data' ? <i className="fa-solid fa-database text-cyan-400"></i> : <i className="fa-solid fa-chart-line text-amber-400"></i>}
+             </button>
+          )}
+
+          {/* OFFLINE MODAL */}
+          {offlineReport && (
+            <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-panel border-emerald-500/50 rounded-2xl p-6 lg:p-8 max-w-md w-full shadow-[0_0_50px_rgba(16,185,129,0.2)] modal-animate relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-cyan-500"></div>
+                <h2 className="text-xl lg:text-2xl font-black text-white mb-2 text-center uppercase tracking-widest">System Link Restored</h2>
+                <p className="text-slate-400 text-sm text-center mb-6">Extraction protocols executed automatically for {formatNumber(offlineReport.time / 3600)} hours.</p>
+                <div className="space-y-4 mb-8">
+                  {offlineReport.capital > 0 && (
+                    <div className="bg-[#0a0f16]/80 border border-emerald-900/50 p-4 rounded-xl flex items-center gap-4">
+                      <div className="bg-emerald-950/50 p-3 rounded-lg text-emerald-400"><i className="fa-solid fa-coins text-2xl"></i></div>
+                      <div>
+                        <div className="text-xs text-slate-400 uppercase tracking-widest font-bold">Capital Generated</div>
+                        <div className="text-xl font-mono font-bold text-emerald-400">{formatCurrency(offlineReport.capital, nota)}</div>
+                      </div>
+                    </div>
+                  )}
+                  {offlineReport.data > 0 && (
+                    <div className="bg-[#0a0f16]/80 border border-cyan-900/50 p-4 rounded-xl flex items-center gap-4">
+                      <div className="bg-cyan-950/50 p-3 rounded-lg text-cyan-400"><i className="fa-solid fa-database text-2xl"></i></div>
+                      <div>
+                        <div className="text-xs text-slate-400 uppercase tracking-widest font-bold">Data Harvested</div>
+                        <div className="text-xl font-mono font-bold text-cyan-400">{formatNumber(offlineReport.data, nota)}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => setOfflineReport(null)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-black uppercase tracking-widest font-bold py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                  Acknowledge
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ACTION MODALS */}
+          {modalState && (
+            <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-panel border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl modal-animate relative bg-[#0a0f16]/90">
+                {modalState.type === 'buyout' && (
+                  <>
+                    <h2 className="text-xl font-black text-amber-400 mb-2 flex items-center gap-2 uppercase tracking-widest"><i className="fa-solid fa-sync"></i> Hostile Takeover</h2>
+                    <p className="text-sm text-slate-300 mb-4">You will liquidate all physical assets to acquire <strong className="text-amber-400">{formatNumber(calculateBuyoutRewards(), nota)} Equity</strong>.</p>
+                    <p className="text-xs text-slate-400 mb-6 font-mono">Requirement for next point: {formatCurrency(getNextBuyoutReq(), nota)}</p>
+                    <div className="flex gap-3">
+                      <button onClick={()=>setModalState(null)} className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors">Cancel</button>
+                      <button onClick={confirmBuyout} className="flex-1 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-black font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-colors">Confirm</button>
+                    </div>
+                  </>
+                )}
+                {modalState.type === 'wipe' && (
+                  <>
+                    <h2 className="text-xl font-black text-red-500 mb-2 flex items-center gap-2 uppercase tracking-widest"><i className="fa-solid fa-skull"></i> Purge Save Data</h2>
+                    <p className="text-sm text-slate-300 mb-6">This will wipe your game save completely. You will lose all extracted data and Equity permanently.</p>
+                    <div className="flex gap-3">
+                      <button onClick={()=>setModalState(null)} className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors">Cancel</button>
+                      <button onClick={confirmWipe} className="flex-1 py-2 rounded-lg bg-red-900 hover:bg-red-800 text-white font-bold uppercase tracking-widest transition-colors border border-red-500">Purge</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TOAST */}
+          <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[110] glass-panel border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-full font-mono text-xs lg:text-sm transition-all duration-500 flex items-center gap-2 shadow-[0_5px_20px_rgba(0,0,0,0.5)] ${saveNotice ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+            <i className="fa-solid fa-info-circle"></i> {saveNotice}
+          </div>
+
+          {/* HEADER */}
+          <header className="h-auto shrink-0 glass-panel border-b border-emerald-700/50 px-3 py-3 lg:px-6 lg:py-0 lg:h-[80px] flex flex-col lg:flex-row items-center justify-between z-50 relative gap-3 bg-[#0a0f16]/80">
+            <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+              <div className="flex items-center gap-3 cursor-pointer">
+                 <div className="w-12 h-12 bg-black border border-emerald-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] rounded">
+                   <i className="fa-solid fa-server text-2xl text-emerald-400"></i>
+                 </div>
+                 <div className="flex flex-col">
+                   <span className="font-black text-sm lg:text-xl tracking-widest uppercase leading-none text-white glitch-hover">Axiom Syndicate</span>
+                   <div className="flex items-center gap-1 mt-1">
+                     <span className="text-[9px] lg:text-[10px] text-emerald-400 tracking-widest font-mono uppercase font-bold">Infinite Hegemony v0.7.0 BETA</span>
+                   </div>
+                 </div>
+              </div>
+
+              <div className="lg:hidden flex gap-2">
+                <button onClick={() => setGameState(p => ({ ...p, buyMultiplier: [1, 10, 100, -1][([1, 10, 100, -1].indexOf(p.buyMultiplier) + 1) % 4] }))} className="h-8 px-3 bg-[#101820]/70 text-emerald-400 rounded border border-emerald-700/50 text-xs font-mono font-bold">
+                  Buy: {gameState.buyMultiplier === -1 ? 'MAX' : `x${gameState.buyMultiplier}`}
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 lg:gap-8 w-full lg:w-auto overflow-x-auto no-scrollbar justify-center lg:justify-end pb-1 lg:pb-0">
+              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/70 p-2 rounded border border-emerald-700/30">
+                <div className="flex items-center gap-1.5 text-emerald-400 mb-0.5">
+                  <i className="fa-solid fa-coins text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-emerald-300">Capital</span>
+                </div>
+                <div className="text-lg lg:text-2xl font-black text-white font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] leading-none">
+                  {formatCurrency(gameState.capital, nota)}
+                </div>
+              </div>
+
+              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/70 p-2 rounded border border-cyan-700/30">
+                <div className="flex items-center gap-1.5 text-cyan-400 mb-0.5">
+                  <i className="fa-solid fa-database text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-cyan-300">User Data</span>
+                </div>
+                <div className="text-lg lg:text-2xl font-black text-white font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(6,182,212,0.5)] leading-none">
+                  {formatNumber(gameState.data, nota)}
+                </div>
+              </div>
+
+              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/70 p-2 rounded border border-amber-700/30">
+                <div className="flex items-center gap-1.5 text-amber-400 mb-0.5">
+                  <i className="fa-solid fa-shield-alt text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-amber-300">Equity</span>
+                </div>
+                <div className="text-lg lg:text-2xl font-black text-white font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] leading-none">
+                  {formatNumber(gameState.equity, nota)}
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden lg:flex items-center gap-3 shrink-0 ml-4">
+              {gameState.policies.aiManager > 0 && (
+                <button 
+                  onClick={() => setGameState(p => ({ ...p, settings: { ...p.settings, aiManagerOn: !p.settings.aiManagerOn } }))} 
+                  className={`h-10 px-3 rounded text-sm font-bold font-mono transition-colors flex items-center gap-2 border ${gameState.settings.aiManagerOn ? 'bg-emerald-900/40 text-emerald-400 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-black/50 text-slate-400 border-emerald-900/30'}`}
+                >
+                  <i className="fa-solid fa-robot"></i> {gameState.settings.aiManagerOn ? 'AI: ON' : 'AI: OFF'}
+                </button>
+              )}
+              <button onClick={() => setGameState(p => ({ ...p, buyMultiplier: [1, 10, 100, -1][([1, 10, 100, -1].indexOf(p.buyMultiplier) + 1) % 4] }))} className="h-10 px-4 bg-[#101820]/80 hover:bg-[#15202b] text-emerald-400 rounded font-mono text-sm font-bold border border-emerald-700/50 transition-colors flex items-center gap-2">
+                <i className="fa-solid fa-cog"></i> Buy: {gameState.buyMultiplier === -1 ? 'MAX' : `x${gameState.buyMultiplier}`}
+              </button>
+            </div>
+          </header>
+          
+          {/* LORE TERMINAL UI */}
+          <div className="w-full bg-[#0a0f16]/90 border-b border-emerald-700/50 p-2 flex items-center gap-3 overflow-hidden shrink-0 z-40 backdrop-blur-sm">
+             <i className="fa-solid fa-terminal text-emerald-500 text-xs animate-pulse pl-2"></i>
+             <div className="text-[10px] text-emerald-400 font-mono whitespace-nowrap overflow-hidden text-ellipsis flex-1">
+                 > {currentLore}
+             </div>
+          </div>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 flex flex-col lg:flex-row min-h-0 w-full max-w-[1600px] mx-auto p-0 lg:p-6 lg:gap-6 relative z-10">
+            
+            {/* HOLDINGS PANEL */}
+            <section className={`flex-1 lg:flex-[0_0_400px] flex flex-col min-h-0 glass-panel lg:rounded-xl overflow-hidden border-t lg:border border-emerald-700/30 bg-[#0a0f16]/90 shadow-2xl ${mobileTab === 'holdings' ? 'flex' : 'hidden lg:flex'}`}>
+              <div className="p-3 lg:p-4 border-b border-emerald-700/50 bg-[#101820]/80 shrink-0">
+                <div className="flex items-center gap-2">
+                  <i className="fa-solid fa-building text-lg lg:text-xl text-emerald-500"></i>
+                  <h2 className="text-base lg:text-lg font-black text-white uppercase tracking-widest">Holdings</h2>
+                </div>
+                <p className="text-[9px] lg:text-[10px] text-emerald-400 font-mono mt-1">Acquire physical and digital assets.</p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3 relative pb-20 lg:pb-3">
+                {Object.entries(gameState.departmentRegistry).map(([key, dep]) => {
+                  const count = gameState.departments[key] || 0;
+                  const currency = gameState.capital;
+                  const drift = gameState.prestigeUpgrades.subsidies || 0;
+                  let amountToBuy = gameState.buyMultiplier === -1 ? calculateMaxAffordable(dep.baseCost, dep.costMult, count, currency, drift) : gameState.buyMultiplier;
+                  const cost = calculateCost(dep.baseCost, dep.costMult, count, Math.max(1, amountToBuy), drift);
+                  const canAfford = currency >= cost && (gameState.buyMultiplier !== -1 || amountToBuy > 0);
+                  const isData = dep.type === 'data';
+                  const tColor = isData ? 'cyan' : 'emerald';
+                  
+                  const mBoost = getMilestoneBoost(count), nMilestone = getNextMilestone(count);
+                  const pMilestone = MILESTONE_THRESHOLDS[MILESTONE_THRESHOLDS.indexOf(nMilestone) - 1] || 0;
+                  const pct = nMilestone ? ((count - pMilestone) / (nMilestone - pMilestone)) * 100 : 100;
+
+                  const totalProd = getTotalProd(dep, count);
+                  const addedProd = getAddedProd(dep, Math.max(1, amountToBuy), count);
+
+                  return (
+                    <div key={key} className={`bg-[#101820]/70 border ${canAfford ? `border-${tColor}-700/50` : 'border-white/5 opacity-80'} rounded p-3 relative overflow-hidden group flex flex-col`}>
+                      <div className={`absolute bottom-0 left-0 h-1 bg-${tColor}-500/40 transition-all duration-300`} style={{width: `${pct}%`}}></div>
+                      
+                      <div className="flex justify-between items-start mb-2 relative z-10">
+                        <div className="flex gap-2 lg:gap-3">
+                          <div className={`shrink-0 flex items-center justify-center w-10 h-10 bg-black border border-${tColor}-500/40 text-${tColor}-400 rounded relative shadow-[inset_0_0_10px_rgba(var(--tw-colors-${tColor}-500),0.3)]`}>
+                            <i className={`${ICON_MAP[dep.icon]} text-lg`}></i>
+                            {mBoost > 1 && <span className={`absolute -top-2 -right-2 bg-${tColor}-900 text-${tColor}-300 text-[9px] font-bold px-1 rounded border border-${tColor}-400`}>x{mBoost}</span>}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-slate-100 text-xs lg:text-sm truncate uppercase tracking-wider">{dep.name}</h3>
+                            <div className="text-[9px] lg:text-[10px] font-mono text-slate-400">Total: {isData ? formatNumber(totalProd, nota) : formatCurrency(totalProd, nota)}/h</div>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <div className="text-xl font-black font-mono text-white tracking-tighter">{count}</div>
+                        </div>
+                      </div>
+
+                      <button
+                        onPointerDown={(e) => canAfford && startHoldBuy('department', key, e)}
+                        onPointerUp={endHoldBuy}
+                        onPointerLeave={endHoldBuy}
+                        onPointerCancel={endHoldBuy}
+                        onContextMenu={(e)=>e.preventDefault()}
+                        disabled={!canAfford}
+                        className={`hold-btn w-full py-2 px-3 rounded font-mono font-bold text-xs flex justify-between items-center transition-colors border mt-auto relative z-10
+                          ${canAfford ? `bg-${tColor}-900/40 hover:bg-${tColor}-900/60 text-${tColor}-300 border-${tColor}-500/60 shadow-[0_0_15px_rgba(var(--tw-colors-${tColor}-500),0.2)]` : 'bg-black/50 text-slate-500 border-white/5'}`}
+                      >
+                        <span className="flex items-center gap-1">
+                           Buy: {formatCurrency(cost, nota)}
+                        </span>
+                        <span className={`text-[9px] opacity-90 ${isData ? 'text-cyan-400' : 'text-emerald-400'}`}>
+                           (+{isData ? formatNumber(addedProd, nota) : formatCurrency(addedProd, nota)}/h)
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* R&D Section */}
+                {gameState.data > 0 && (
+                  <div className="mt-4 border border-cyan-700/50 rounded p-3 bg-[#101820]/80 relative overflow-hidden group">
+                    <div className="flex justify-between items-center mb-2 relative z-10">
+                      <div className="flex items-center gap-2">
+                        <i className={`fa-solid fa-network-wired text-base ${gameState.autoResearchEnabled ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`}></i>
+                        <h3 className="font-bold text-slate-100 text-xs uppercase tracking-widest">Procedural R&D</h3>
+                      </div>
+                      <button onClick={() => setGameState(p=>({...p, autoResearchEnabled: !p.autoResearchEnabled}))} className={`px-2 py-1 rounded text-[9px] font-mono font-bold flex items-center gap-1 border ${gameState.autoResearchEnabled ? 'bg-cyan-900/60 text-cyan-300 border-cyan-400' : 'bg-black text-slate-500 border-slate-700'}`}>
+                        {gameState.autoResearchEnabled ? 'ON' : 'OFF'}
+                      </button>
+                    </div>
+                    
+                    <div className="flex justify-between text-[9px] font-mono mb-1 text-slate-300">
+                      <span>Cost: {formatNumber(getResearchCost().amount, nota)} {getResearchCost().type}</span>
+                      <button onClick={() => setGameState(p=>({...p, researchFocus: ['department', 'policy', 'prestige'][['department', 'policy', 'prestige'].indexOf(p.researchFocus)+1 % 3]}))} className="text-cyan-400 underline uppercase hover:text-cyan-300">Focus: {gameState.researchFocus}</button>
+                    </div>
+                    
+                    <div className="w-full bg-black border border-slate-700 rounded-full h-1.5 overflow-hidden mb-2">
+                      <div className={`h-full rounded-full transition-all duration-300 ${isResearching ? 'bg-cyan-400 w-full animate-pulse' : 'bg-cyan-600'}`} style={{width: isResearching ? '100%' : `${Math.min(100, ((getResearchCost().type==='equity'?gameState.equity:gameState.data)/getResearchCost().amount)*100)}%`}}></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* EXECUTIVE DESK PANEL */}
+            <section className={`flex-[2] flex flex-col min-h-0 lg:gap-6 ${mobileTab === 'desk' ? 'flex' : 'hidden lg:flex'}`}>
+              
+              <div className="glass-panel lg:rounded-xl p-4 lg:p-6 shrink-0 relative overflow-hidden border-b lg:border border-emerald-700/50 bg-[#0a0f16]/90 lg:shadow-2xl">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="flex justify-between items-end mb-2 relative z-10">
+                  <div>
+                    <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono tracking-widest uppercase mb-1 flex items-center gap-1"><i className="fa-solid fa-star"></i> Classification</div>
+                    <div className="text-xl lg:text-2xl font-black text-white uppercase tracking-widest">{rankInfo.current.name}</div>
+                  </div>
+                  {rankInfo.next && <div className="text-[10px] lg:text-xs font-mono text-emerald-300">{rankInfo.progress.toFixed(1)}%</div>}
+                </div>
+                {rankInfo.next && (
+                  <div className="relative z-10">
+                    <div className="w-full bg-black rounded h-1.5 lg:h-2 border border-emerald-700/50 overflow-hidden mb-1">
+                      <div className="bg-emerald-500 h-full transition-all duration-1000 relative shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: `${rankInfo.progress}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-[9px] lg:text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                      <span>{formatCurrency(gameState.lifetimeCapital, nota)}</span>
+                      <span>Next: {rankInfo.next.name} ({formatCurrency(rankInfo.next.req, nota)})</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Central Clicker */}
+              <div ref={clickContainerRef} className="flex-1 glass-panel lg:rounded-xl flex flex-col items-center justify-center relative overflow-hidden group border-b lg:border border-emerald-700/30 bg-[#080c11]/90 lg:shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
+                
+                {gameState.monopolyBuff.active && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-950/90 border border-amber-500 text-amber-300 px-4 py-1.5 rounded font-mono font-bold tracking-widest uppercase text-[10px] lg:text-xs animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center gap-2 z-20 backdrop-blur-md whitespace-nowrap">
+                    <i className="fa-solid fa-chart-line"></i> SYSTEM OVERRIDE x7 <i className="fa-solid fa-chart-line"></i>
+                  </div>
+                )}
+
+                <div className="relative z-10 w-48 h-48 lg:w-64 lg:h-64 flex items-center justify-center mt-2 lg:mt-0">
+                  <div className="absolute inset-0 border border-emerald-500/30 rounded-full animate-spin-slow pointer-events-none"></div>
+                  <div className="absolute inset-4 border border-emerald-700/60 rounded-full animate-spin-slower-reverse pointer-events-none"></div>
+                  
+                  <button 
+                    onPointerDown={startHoldClick}
+                    onPointerUp={endHoldClick}
+                    onPointerLeave={endHoldClick}
+                    onPointerCancel={endHoldClick}
+                    onContextMenu={(e)=>e.preventDefault()}
+                    className={`relative w-40 h-40 lg:w-52 lg:h-52 rounded-full bg-[#030507] border-2 flex items-center justify-center hold-btn transition-all duration-200 shadow-[0_0_60px_rgba(16,185,129,0.15)]
+                      ${gameState.monopolyBuff.active ? 'border-amber-400 shadow-[0_0_100px_rgba(245,158,11,0.3)]' : 'border-emerald-600 hover:border-emerald-400'}`}
+                  >
+                    <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.15),transparent)]"></div>
+                    <i className={`fa-solid fa-globe text-6xl lg:text-8xl relative z-10 ${gameState.monopolyBuff.active ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.9)]' : 'text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.9)]'}`}></i>
+                  </button>
+                </div>
+                
+                <p className="mt-6 lg:mt-10 text-[10px] lg:text-xs text-emerald-400 font-mono tracking-widest uppercase flex items-center gap-2 bg-[#05080a] px-4 py-1.5 lg:py-2 rounded border border-emerald-700/50">
+                  <i className="fa-solid fa-fingerprint animate-pulse"></i> Extract Capital
+                </p>
+
+                {/* --- TIME FRAME STATS --- */}
+                <div className="mt-6 lg:mt-8 grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 w-full max-w-[90%] lg:max-w-md mx-auto z-20">
+                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Minute</span>
+                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 60, nota)}</span>
+                    </div>
+                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Hour</span>
+                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 3600, nota)}</span>
+                    </div>
+                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Day</span>
+                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 86400, nota)}</span>
+                    </div>
+                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Week</span>
+                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 604800, nota)}</span>
+                    </div>
+                </div>
+
+                {floatingTexts.map(ft => (
+                  <div key={ft.id} className={`absolute font-black font-mono pointer-events-none z-50 text-lg lg:text-xl text-${ft.colorCode}-400 drop-shadow-[0_0_10px_currentColor]`} style={{ left: ft.x, top: ft.y, animation: 'floatUpAndFade 1s ease-out forwards' }}>
+                    {ft.text}
+                  </div>
+                ))}
+              </div>
+
+              {/* Analytics */}
+              <div className="glass-panel lg:rounded-xl p-3 lg:p-4 shrink-0 grid grid-cols-3 gap-2 lg:gap-4 divide-x divide-emerald-700/50 border-b lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl mb-16 lg:mb-0">
+                <div className="px-2">
+                  <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono uppercase tracking-widest mb-1">Rank Mult</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-emerald-300">x{formatNumber(multipliers.rankBoost, nota)}</div>
+                </div>
+                <div className="px-2 lg:px-4">
+                  <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono uppercase tracking-widest mb-1">Extractions</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-slate-200">{formatNumber(gameState.stats.totalClicks, nota)}</div>
+                </div>
+                <div className="px-2 lg:px-4">
+                  <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono uppercase tracking-widest mb-1">Equity Boost</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-amber-400">x{formatNumber(multipliers.equityBoost, nota)}</div>
+                </div>
+              </div>
+            </section>
+
+            {/* RIGHT COLUMN: Strategy & Settings */}
+            <section className={`flex-1 lg:flex-[0_0_350px] flex flex-col min-h-0 glass-panel lg:rounded-xl overflow-hidden border-t lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl ${mobileTab === 'strategy' ? 'flex' : 'hidden lg:flex'}`}>
+              
+              <div className="flex p-2 gap-1 lg:gap-2 bg-[#101820]/90 border-b border-emerald-700/50 shrink-0">
+                <button onClick={() => setStrategyTab('policies')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider ${strategyTab === 'policies' ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}>Policies</button>
+                <button onClick={() => setStrategyTab('prestige')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider flex items-center justify-center gap-1 ${strategyTab === 'prestige' ? 'bg-amber-900/50 text-amber-300 border border-amber-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}><i className="fa-solid fa-landmark"></i> Prestige</button>
+                <button onClick={() => setStrategyTab('settings')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'settings' ? 'bg-slate-700 text-white border-slate-500' : 'text-slate-400 hover:bg-white/10 border-transparent'}`}><i className="fa-solid fa-cog"></i></button>
+                <button onClick={() => setStrategyTab('about')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'about' ? 'bg-purple-900/50 text-purple-300 border-purple-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`}><i className="fa-solid fa-user-astronaut"></i></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 relative pb-20 lg:pb-3">
+                {strategyTab === 'policies' && (
+                  <div className="space-y-3">
+                    {Object.entries(gameState.policyRegistry).map(([key, upg]) => {
+                      const count = gameState.policies[key] || 0;
+                      const cost = calculateCost(upg.baseCost, upg.costMult, count, 1, gameState.prestigeUpgrades.subsidies || 0);
+                      const canAfford = gameState.capital >= cost;
+
+                      return (
+                        <div key={key} className={`bg-[#101820]/70 border ${canAfford ? 'border-cyan-700/50' : 'border-white/5 opacity-80'} rounded p-3 flex flex-col`}>
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="font-bold text-xs text-slate-100 uppercase tracking-widest truncate pr-2">{upg.name}</div>
+                            <div className="text-cyan-400 text-[9px] font-mono bg-black px-1.5 py-0.5 rounded border border-cyan-800 shrink-0">Lvl {count}</div>
+                          </div>
+                          <div className="text-[10px] text-slate-300 mb-2 leading-tight">{upg.desc}</div>
+                          <div className="mt-auto flex justify-between items-center gap-2">
+                            <div className="text-[9px] text-emerald-400 font-mono bg-black px-1.5 py-0.5 rounded border border-emerald-800/60 truncate">
+                              {upg.effectType.replace('_', ' ')}: +{upg.effectBase}
+                            </div>
+                            <button
+                              onPointerDown={(e) => canAfford && startHoldBuy('policy', key, e)}
+                              onPointerUp={endHoldBuy}
+                              onPointerLeave={endHoldBuy}
+                              onPointerCancel={endHoldBuy}
+                              onContextMenu={(e)=>e.preventDefault()}
+                              disabled={!canAfford}
+                              className={`hold-btn shrink-0 px-3 py-1.5 rounded font-mono text-[10px] lg:text-xs font-bold flex items-center gap-1 transition-colors border ${canAfford ? 'bg-cyan-900/40 hover:bg-cyan-900/60 text-cyan-300 border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-black/50 text-slate-500 border-transparent'}`}
+                            >
+                              {formatCurrency(cost, nota)}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {strategyTab === 'prestige' && (
+                  <div className="space-y-4">
+                    <div className="bg-[#101820]/90 border border-amber-700/50 rounded p-4 relative overflow-hidden text-center shadow-[inset_0_0_15px_rgba(245,158,11,0.15)]">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none -mt-10 -mr-10"></div>
+                      <i className="fa-solid fa-sync text-2xl text-amber-400 mb-2"></i>
+                      <h2 className="text-sm font-black text-white uppercase tracking-widest mb-1">Hostile Takeover</h2>
+                      <p className="text-[10px] text-slate-300 mb-3 font-mono">Liquidate all physical assets for permanent Equity.</p>
+                      
+                      <div className="bg-black rounded border border-amber-800/60 py-2 mb-3">
+                        <div className="text-[9px] text-amber-500 font-mono uppercase tracking-widest">Gain Equity</div>
+                        <div className="text-xl font-black text-amber-400 font-mono drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">+{formatNumber(calculateBuyoutRewards(), nota)}</div>
+                        <div className="text-[9px] text-slate-400 mt-1 font-mono">Next: {formatCurrency(getNextBuyoutReq(), nota)}</div>
+                      </div>
+                      <button onClick={()=>setModalState({type: 'buyout'})} disabled={calculateBuyoutRewards() <= 0} className={`w-full py-2 rounded font-mono font-bold text-xs uppercase tracking-widest transition-all ${calculateBuyoutRewards() > 0 ? 'bg-amber-600 hover:bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-black/60 text-slate-500 cursor-not-allowed border border-white/10'}`}>
+                        Initiate
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {Object.entries(gameState.prestigeRegistry).map(([key, upg]) => {
+                        const count = gameState.prestigeUpgrades[key] || 0;
+                        const cost = calculateCost(upg.cost, upg.costMult, count, 1, 0); 
+                        const canAfford = gameState.equity >= cost;
+                        return (
+                          <div key={key} className="bg-[#101820]/80 border border-amber-800/40 rounded p-3">
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="font-bold text-xs text-amber-300 uppercase tracking-widest">{upg.name}</div>
+                              <div className="text-[9px] text-amber-500 font-mono mb-1">Level {count}</div>
+                            </div>
+                            <p className="text-[10px] text-slate-300 leading-tight mb-2">{upg.desc}</p>
+                            <div className="flex justify-between items-center gap-2">
+                              <span className="text-[9px] text-emerald-400 font-mono bg-black px-1.5 py-0.5 rounded border border-emerald-800/60 truncate">
+                                {upg.effectType.replace('_', ' ')}: +{upg.effectBase}
+                              </span>
+                              <button
+                                onPointerDown={(e) => canAfford && startHoldBuy('prestige', key, e)}
+                                onPointerUp={endHoldBuy}
+                                onPointerLeave={endHoldBuy}
+                                onPointerCancel={endHoldBuy}
+                                onContextMenu={(e)=>e.preventDefault()}
+                                disabled={!canAfford}
+                                className={`hold-btn shrink-0 px-2 py-1.5 rounded font-mono text-[10px] lg:text-xs font-bold flex items-center gap-1 transition-colors border ${canAfford ? 'bg-amber-900/40 hover:bg-amber-900/60 text-amber-300 border-amber-500/60' : 'bg-black/60 text-slate-500 border-transparent'}`}
+                              >
+                                {formatNumber(cost, nota)} <i className="fa-solid fa-shield-alt"></i>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {strategyTab === 'settings' && (
+                  <div className="space-y-6 pt-2">
+                    <div>
+                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1">Display</h3>
+                      <div className="flex items-center justify-between bg-[#101820]/80 border border-emerald-800/40 p-3 rounded">
+                        <div>
+                          <div className="font-bold text-xs lg:text-sm text-slate-100">Values</div>
+                        </div>
+                        <button onClick={() => setGameState(p=>({...p, settings: {...p.settings, notation: p.settings.notation === 'standard' ? 'scientific' : 'standard'}}))} className="bg-black text-emerald-400 font-mono py-1.5 px-3 rounded text-xs border border-emerald-700/60 hover:bg-[#101820]">
+                          {nota === 'standard' ? 'Standard' : 'Scientific'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1">Data Storage</h3>
+
+                      <div className="grid grid-cols-2 gap-3 mb-2">
+                        <button onClick={() => saveGame(true)} className="bg-black hover:bg-emerald-900/30 text-emerald-400 border border-emerald-700/60 p-3 rounded flex flex-col items-center gap-2 transition-colors">
+                          <i className="fa-solid fa-hard-drive text-lg lg:text-xl"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest">Sync</span>
+                        </button>
+                        <button onClick={() => setModalState({type: 'wipe'})} className="bg-black hover:bg-red-900/30 text-red-400 border border-red-800/60 p-3 rounded flex flex-col items-center gap-2 transition-colors">
+                          <i className="fa-solid fa-skull text-lg lg:text-xl"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest">Purge</span>
+                        </button>
+                      </div>
+                      
+                      <div className="text-[9px] text-slate-400 font-mono text-center mb-4 flex items-center justify-center gap-1">
+                        <i className="fa-solid fa-check-circle text-emerald-500"></i> Local storage auto-syncs every 10s.
+                      </div>
+                      
+                      <button onClick={() => { 
+                        try {
+                          const saveStr = btoa(encodeURIComponent(JSON.stringify(stateRef.current)));
+                          navigator.clipboard.writeText(saveStr); 
+                          showToast("Copied to Clipboard!"); 
+                        } catch(e) { showToast("Export Error"); }
+                      }} className="w-full bg-black hover:bg-slate-900 text-slate-200 font-mono font-bold py-2 rounded text-xs transition-colors border border-slate-600 mb-3 flex items-center justify-center gap-2 uppercase tracking-widest">
+                        <i className="fa-solid fa-copy"></i> Export Memory
+                      </button>
+                      
+                      <div className="flex gap-2">
+                        <input ref={importRef} type="text" placeholder="Paste memory string..." className="flex-1 bg-black border border-slate-600 rounded px-2 lg:px-3 py-2 text-[10px] lg:text-xs text-emerald-400 font-mono focus:outline-none focus:border-emerald-400" />
+                        <button onClick={() => { 
+                          try { 
+                            if(importRef.current?.value) { 
+                              const decodedStr = decodeURIComponent(atob(importRef.current.value));
+                              JSON.parse(decodedStr); 
+                              localStorage.setItem(SAVE_KEY, decodedStr); 
+                              window.location.reload(); 
+                            } 
+                          } catch(e) { showToast("Invalid Memory String"); } 
+                        }} className="bg-emerald-900/50 hover:bg-emerald-800/70 text-emerald-300 font-mono font-bold py-2 px-3 rounded text-[10px] lg:text-xs transition-colors border border-emerald-400/60 uppercase tracking-widest">
+                          Inject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {strategyTab === 'about' && (
+                  <div className="space-y-4 pt-2 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 bg-black rounded border border-emerald-500 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] mb-2 mt-4">
+                       <i className="fa-solid fa-user-astronaut text-3xl text-emerald-400"></i>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-black text-white tracking-widest uppercase">Developer Info</h2>
+                      <p className="text-[10px] text-emerald-500 font-mono mb-4 uppercase tracking-widest">Axiom Syndicate: v0.7.0 BETA</p>
+                    </div>
+
+                    <div className="w-full bg-black border border-emerald-700/60 rounded p-4 text-left">
+                       <p className="text-xs text-slate-200 leading-relaxed font-mono">
+                         <span className="text-emerald-400 font-bold">> STATUS:</span> {atob('WW91IGFyZSBpbnRlcmFjdGluZyB3aXRoIHRoZSBBeGlvbSBTeW5kaWNhdGUgZW5naW5lLCBhIGhpZ2hseSBzY2FsYWJsZSBjYXBpdGFsaXN0IHNpbXVsYXRvci4=')}<br/><br/>
+                         <span className="text-amber-400 font-bold">> ALERT:</span> {atob('RW5zdXJlIGZyZXF1ZW50IG1hbnVhbCBzYXZlcyB0byBwcmV2ZW50IGJyb3dzZXIgY2FjaGUgbG9zcy4gQ2xvdWQgc3luYyBpcyBjdXJyZW50bHkgZGlzYWJsZWQgZm9yIHRoaXMgbG9jYWxpemVkIGJ1aWxkLg==')}
+                       </p>
+                    </div>
+
+                    <div className="w-full bg-[#101820]/80 border border-emerald-800/50 rounded p-4 text-left space-y-3">
+                        <h3 className="text-emerald-500 font-bold text-xs uppercase tracking-widest border-b border-emerald-800/50 pb-1">Changelog History</h3>
+                        <div className="text-[10px] text-slate-300 font-mono space-y-2">
+                            <p><span className="text-slate-500">v0.1.0</span> - Initial React logic. Math was broken.</p>
+                            <p><span className="text-slate-500">v0.3.5</span> - Added Data/Equity mechanics after 3 weeks of battling UI state.</p>
+                            <p><span className="text-slate-500">v0.5.0</span> - Learned how to prompt AI to help fix my memory leaks.</p>
+                            <p><span className="text-slate-500">v0.6.2</span> - Added standard notation and dark mode.</p>
+                            <p className="text-emerald-400 font-bold"><span className="text-emerald-600">v0.7.0 BETA</span> - Real-world economy gaps. The game is finally infinite. 6 weeks of tweaking paid off!</p>
+                        </div>
+                    </div>
+
+                    <div className="w-full bg-black border border-purple-700/60 rounded p-4 text-left">
+                       <p className="text-[10px] text-slate-300 font-mono leading-relaxed">
+                         <strong className="text-purple-400">>> BUILT BY:</strong> <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="hover:text-purple-300 underline transition-colors">King_Nugget_AU</a><br/>
+                         A solo hobbyist project exploring extreme idle scaling.
+                       </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          </main>
+
+          {/* MOBILE BOTTOM NAVIGATION */}
+          <nav className="lg:hidden h-16 shrink-0 bg-[#0a0f16]/95 backdrop-blur-md border-t border-emerald-700/50 flex z-50 pb-safe">
+            <button onClick={() => setMobileTab('holdings')} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'holdings' ? 'text-emerald-400 bg-emerald-900/30' : 'text-slate-400 hover:text-slate-200'}`}>
+              <i className="fa-solid fa-building text-lg"></i>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Holdings</span>
+            </button>
+            <button onClick={() => setMobileTab('desk')} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'desk' ? 'text-white bg-white/10 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
+              <i className="fa-solid fa-fingerprint text-lg"></i>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Extract</span>
+            </button>
+            <button onClick={() => setMobileTab('strategy')} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'strategy' ? 'text-cyan-400 bg-cyan-900/30' : 'text-slate-400 hover:text-slate-200'}`}>
+              <i className="fa-solid fa-network-wired text-lg"></i>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Strategy</span>
+            </button>
+          </nav>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+    // Cleaned standard dev logs.
+    console.clear();
+    console.log("%c Axiom Syndicate: Infinite Hegemony v0.7.0 BETA ", "background: #020202; color: #10b981; font-weight: bold; padding: 4px; border-radius: 4px;");
+    console.log("%c [SYS]: React initialized. Variables scaled for indefinite uptime.", "color: #94a3b8; font-family: monospace;");
+  </script>
+</body>
+</html>
