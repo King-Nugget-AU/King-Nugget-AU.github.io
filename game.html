@@ -211,7 +211,7 @@
       if (!num || isNaN(num) || !isFinite(num)) return "0";
       if (num < 1000) return Math.floor(num).toString();
       if (notation === 'scientific' || num > 1e60) return num.toExponential(2).replace('e+', 'e');
-      const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Qad", "Ocd"];
+      const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "V"];
       const suffixNum = Math.floor(Math.log10(num) / 3);
       if (suffixNum >= suffixes.length) return num.toExponential(2).replace('e+', 'e');
       let shortValue = num / Math.pow(10, suffixNum * 3);
@@ -981,6 +981,10 @@
           <header className="h-auto shrink-0 glass-panel border-b border-emerald-700/50 px-3 py-3 lg:px-6 lg:py-0 lg:h-[80px] flex flex-col lg:flex-row items-center justify-between z-50 relative gap-3 bg-[#0a0f16]/80">
             <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
               <div className="flex items-center gap-3 cursor-pointer">
+                 {/* Hub Integration Feature Added */}
+                 <a href="index.html" className="hidden lg:flex w-10 h-10 bg-black border border-emerald-800 text-emerald-500 hover:bg-emerald-900/50 hover:text-emerald-300 transition-colors items-center justify-center rounded shadow-[0_0_10px_rgba(16,185,129,0.2)]" title="Return to Project Hub">
+                   <i className="fa-solid fa-house"></i>
+                 </a>
                  <div className="w-12 h-12 bg-black border border-emerald-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] rounded">
                    <i className="fa-solid fa-server text-2xl text-emerald-400"></i>
                  </div>
@@ -1255,8 +1259,10 @@
               <div className="flex p-2 gap-1 lg:gap-2 bg-[#101820]/90 border-b border-emerald-700/50 shrink-0">
                 <button onClick={() => setStrategyTab('policies')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider ${strategyTab === 'policies' ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}>Policies</button>
                 <button onClick={() => setStrategyTab('prestige')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider flex items-center justify-center gap-1 ${strategyTab === 'prestige' ? 'bg-amber-900/50 text-amber-300 border border-amber-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}><i className="fa-solid fa-landmark"></i> Prestige</button>
-                <button onClick={() => setStrategyTab('settings')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'settings' ? 'bg-slate-700 text-white border-slate-500' : 'text-slate-400 hover:bg-white/10 border-transparent'}`}><i className="fa-solid fa-cog"></i></button>
-                <button onClick={() => setStrategyTab('about')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'about' ? 'bg-purple-900/50 text-purple-300 border-purple-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`}><i className="fa-solid fa-user-astronaut"></i></button>
+                {/* NEW FEATURE: Analytics/Stats Tab Added */}
+                <button onClick={() => setStrategyTab('stats')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'stats' ? 'bg-blue-900/50 text-blue-300 border-blue-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="Statistics"><i className="fa-solid fa-chart-bar"></i></button>
+                <button onClick={() => setStrategyTab('settings')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'settings' ? 'bg-slate-700 text-white border-slate-500' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="Settings"><i className="fa-solid fa-cog"></i></button>
+                <button onClick={() => setStrategyTab('about')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'about' ? 'bg-purple-900/50 text-purple-300 border-purple-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="About"><i className="fa-solid fa-user-astronaut"></i></button>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-3 relative pb-20 lg:pb-3">
@@ -1345,6 +1351,51 @@
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* NEW FEATURE: Stats Integration */}
+                {strategyTab === 'stats' && (
+                  <div className="space-y-4 pt-2">
+                    <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1">System Analytics</h3>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
+                         <i className="fa-solid fa-fingerprint text-emerald-500 mb-1"></i>
+                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Extractions</span>
+                         <span className="text-sm font-bold text-emerald-300 font-mono">{formatNumber(gameState.stats.totalClicks, nota)}</span>
+                       </div>
+                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
+                         <i className="fa-solid fa-chart-line text-amber-500 mb-1"></i>
+                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Market Booms</span>
+                         <span className="text-sm font-bold text-amber-300 font-mono">{formatNumber(gameState.stats.marketBooms, nota)}</span>
+                       </div>
+                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
+                         <i className="fa-solid fa-clock text-cyan-500 mb-1"></i>
+                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Time Online</span>
+                         <span className="text-sm font-bold text-cyan-300 font-mono">{(gameState.stats.timePlayed / 3600).toFixed(1)}h</span>
+                       </div>
+                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
+                         <i className="fa-solid fa-sync text-purple-500 mb-1"></i>
+                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Takeovers</span>
+                         <span className="text-sm font-bold text-purple-300 font-mono">{gameState.buyouts}</span>
+                       </div>
+                    </div>
+
+                    <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 space-y-2">
+                      <div className="flex justify-between items-center text-[10px] lg:text-xs font-mono">
+                        <span className="text-slate-400">Total Run Capital:</span>
+                        <span className="text-emerald-400 font-bold">{formatCurrency(gameState.runCapital, nota)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] lg:text-xs font-mono">
+                        <span className="text-slate-400">Total Lifetime Capital:</span>
+                        <span className="text-emerald-400 font-bold">{formatCurrency(gameState.lifetimeCapital, nota)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] lg:text-xs font-mono">
+                        <span className="text-slate-400">Procedural Tech:</span>
+                        <span className="text-cyan-400 font-bold">{procStats.deps + procStats.pols + procStats.pres} Discovered</span>
+                      </div>
                     </div>
                   </div>
                 )}
