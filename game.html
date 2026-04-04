@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Axiom Syndicate: Infinite Hegemony</title>
+  <title>Axiom Syndicate: Infinite Hegemony v1.0</title>
   
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -16,7 +16,7 @@
       --bg-dark: #020202;
       --term-green: #10b981;
       --term-dark-green: #064e3b;
-      --panel-bg: rgba(15, 20, 25, 0.90);
+      --panel-bg: rgba(10, 15, 22, 0.95);
       --panel-border: rgba(16, 185, 129, 0.3);
     }
     
@@ -34,9 +34,8 @@
 
     /* Immersion Lock */
     .lock-scroll { overflow: hidden !important; height: 100vh !important; width: 100vw !important; }
-    .allow-scroll { overflow: hidden; }
-
-    /* Hide all scrollbars globally while keeping scroll functionality */
+    
+    /* Hide scrollbars */
     * { scrollbar-width: none; -ms-overflow-style: none; }
     *::-webkit-scrollbar { display: none; }
 
@@ -79,10 +78,6 @@
       60% { transform: skew(-2deg); } 80% { transform: skew(2deg); }
     }
     
-    .cursor-blink { animation: blink 1s step-end infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-    /* Touch buttons - CRITICAL FIX FOR HOLD BUGS */
     .hold-btn { touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
     .hold-btn:active:not(:disabled) { transform: scale(0.96); transition: transform 0.05s; }
     
@@ -96,6 +91,8 @@
     /* Hardware Specific Glitches */
     .system-glitch-1 { filter: hue-rotate(90deg) blur(1px); transform: translate(2px, -2px); }
     .system-glitch-2 { filter: invert(1) hue-rotate(180deg); transform: skew(2deg); }
+    .bankrupt-pulse { animation: bankrupt-glow 2s infinite alternate; }
+    @keyframes bankrupt-glow { 0% { box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.3); } 100% { box-shadow: inset 0 0 80px rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.8); } }
   </style>
 </head>
 <body class="lock-scroll" id="main-body">
@@ -109,89 +106,118 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-    const SAVE_KEY = 'axiomSyndicateSave_v0.7.0_beta'; 
+    const SAVE_KEY = 'axiomSyndicateSave_v1.0.0_infinite'; 
 
-    // --- MATH FAILSAFES ---
-    // Prevent Memory Leaks and NaNs in late game exponential growth
+    // --- MATHEMATICAL DILATION FOR 10-YEAR LIFESPAN ---
+    // This forcibly suppresses the multiplier exponent once numbers get absurd, 
+    // ensuring the journey to 1e300 takes years of optimization.
+    const applyDilation = (val) => {
+        if (val <= 1e12) return val;
+        let dilated = val;
+        if (dilated > 1e12) dilated = 1e12 * Math.pow(dilated / 1e12, 0.85); // 1st Wall
+        if (dilated > 1e24) dilated = 1e24 * Math.pow(dilated / 1e24, 0.70); // 2nd Wall
+        if (dilated > 1e40) dilated = 1e40 * Math.pow(dilated / 1e40, 0.50); // 3rd Wall
+        if (dilated > 1e60) dilated = 1e60 * Math.pow(dilated / 1e60, 0.30); // 4th Wall
+        if (dilated > 1e100) dilated = 1e100 * Math.pow(dilated / 1e100, 0.15); // The Abyss
+        return dilated;
+    };
+
+    const getDilationSeverity = (val) => {
+        if (val > 1e100) return "ABYSSAL (85% Output Loss)";
+        if (val > 1e60) return "EXTREME (70% Output Loss)";
+        if (val > 1e40) return "SEVERE (50% Output Loss)";
+        if (val > 1e24) return "HIGH (30% Output Loss)";
+        if (val > 1e12) return "MODERATE (15% Output Loss)";
+        return "NONE (Systems Optimal)";
+    };
+
     const safeAdd = (currentValue, amountToAdd) => {
         const result = currentValue + amountToAdd;
         return Number.isFinite(result) && !Number.isNaN(result) ? result : currentValue;
     };
 
-    // --- LORE SYSTEM (Encoded Tycoon Milestones) ---
-    // Base64 Encoded to prevent console-snooping, scrubbed of ARG narrative to standard Tycoon vibes.
+    // --- TAX BRACKETS (Real-world scaling) ---
+    const TAX_BRACKETS = [
+        { threshold: 1e3, rate: 0.10 },     // $1,000 / sec
+        { threshold: 1e5, rate: 0.20 },     // $100k / sec
+        { threshold: 1e7, rate: 0.30 },     // $10M / sec
+        { threshold: 1e10, rate: 0.40 },    // $10B / sec
+        { threshold: 1e13, rate: 0.55 },    // $10T / sec
+        { threshold: 1e18, rate: 0.70 },    // $1 Quintillion / sec
+        { threshold: 1e24, rate: 0.85 },    // $1 Septillion / sec
+        { threshold: 1e33, rate: 0.95 },    // Decillion Hedge
+        { threshold: 1e50, rate: 0.99 }     // The Hegemony Tax
+    ];
+
     const LORE_MESSAGES = [
-      { id: 1, req: () => true, text: atob("VFlDT09OIEVOR0lORSB2MC43LjAtQkVUQSBPTkxJTkUuIFRhcmdldCBNYXJrZXQ6IEdsb2JhbC4gQXdhaXRpbmcgY2FwaXRhbCBleHRyYWN0aW9uLg==") },
-      { id: 2, req: (s) => s.stats.totalClicks > 10, text: atob("TWFudWFsIGNhcGl0YWwgZXh0cmFjdGlvbiBkZXRlY3RlZC4gRGVsZWdhdGUgdG8gYXV0b21hdGVkIGFzc2V0cyB0byBlbnN1cmUgc2NhbGFibGUgY29uc3VtcHRpb24u") },
-      { id: 3, req: (s) => s.departments.stand >= 1, text: atob("QXNzZXQgYWNxdWlyZWQ6IExlbW9uYWRlIFN0YW5kLiBBIHJ1ZGltZW50YXJ5IGZyb250IGZvciBjYXBpdGFsIGdlbmVyYXRpb24u") },
-      { id: 4, req: (s) => s.departments.supermarket >= 1, text: atob("U3VwZXJtYXJrZXQgY2hhaW4gZXN0YWJsaXNoZWQuIFdlIG5vdyBjb250cm9sIHRoZWlyIGxvY2FsaXplZCBzdXBwbHkgbGluZXMu") },
-      { id: 5, req: (s) => s.capital >= 1e6, text: atob("Q2FwaXRhbCByZXNlcnZlcyBleGNlZWQgJDEsMDAwLDAwMC4gVGhlIFN5bmRpY2F0ZSBpcyBleHBhbmRpbmcgaXRzIG1hcmtldCBmb290cHJpbnQu") },
-      { id: 6, req: (s) => s.departments.bank >= 1, text: atob("SW52ZXN0bWVudCBCYW5rIGFjcXVpcmVkLiBXZSBub3cgY29udHJvbCB0aGUgZGVidCBvZiBvdXIgYWR2ZXJzYXJpZXMu") },
-      { id: 7, req: (s) => s.capital >= 1e9, text: atob("Q2FwaXRhbCByZXNlcnZlcyBleGNlZWQgJDEsMDAwLDAwMCwwMDAuIFByZXBhcmUgZm9yIEhvc3RpbGUgVGFrZW92ZXIgKEJ1eW91dCku") },
-      { id: 8, req: (s) => s.buyouts >= 1, text: atob("TWFya2V0IG1vbm9wb2xpemVkLiBUYWtlb3ZlciBjb21wbGV0ZS4gWW91ciBFcXVpdHkgc2VjdXJlcyBvdXIgZnV0dXJlIGFjcm9zcyBnbG9iYWwgbWFya2V0cy4=") },
-      { id: 9, req: (s) => s.data >= 1000, text: atob("U3Vic3RhbnRpYWwgdXNlciBkYXRhIGhhcnZlc3RlZC4gVGhlIGFsZ29yaXRobSBpcyBsZWFybmluZyBjb25zdW1lciBiZWhhdmlvci4=") },
-      { id: 10, req: (s) => s.buyouts >= 2, text: atob("QSBzZWNvbmQgbG9vcC4gVGhlIFN5bmRpY2F0ZSBleHBhbmRzIGluZGVmaW5pdGVseS4gVGltZSBpcyBtb25leS4=") },
-      { id: 11, req: (s) => s.capital >= 1e12, text: atob("VHJpbGxpb24tZG9sbGFyIHZhbHVhdGlvbi4gVGhlIGdsb2JhbCBtYXJrZXQgaXMgZnVuY3Rpb25hbGx5IG91cnMu") }
+      { id: 1, req: () => true, text: "ENGINE ONLINE. Target Market: Global. Awaiting capital extraction." },
+      { id: 2, req: (s) => s.stats.totalClicks > 10, text: "Manual extraction detected. Delegate to automated assets to survive upcoming tax brackets." },
+      { id: 3, req: (s) => s.departments.stand >= 1, text: "Lemonade Stand acquired. A tax-free beginning. Protect its margins." },
+      { id: 4, req: (s) => s.departments.kiosk >= 1, text: "Mall Kiosk operational. Welcome to real-world overheads and rent." },
+      { id: 5, req: (s) => s.capital >= 1e6, text: "Capital reserves exceed $1,000,000. The Revenue Service is watching your gross income." },
+      { id: 6, req: (s) => s.buyouts >= 1, text: "Market monopolized. Takeover complete. Your Equity buffers our reality." },
+      { id: 7, req: (s) => s.data >= 1000, text: "Substantial user data harvested. The algorithm is learning consumer behavior." },
+      { id: 8, req: (s) => s.capital >= 1e12, text: "Trillion-dollar valuation. Dilation engines engaging to prevent systemic economic collapse." }
     ];
 
     const CORPORATE_RANKS = [
       { name: "Street Vendor", req: 0, mult: 1 }, 
-      { name: "Local Business", req: 1e6, mult: 2 },
-      { name: "Regional Chain", req: 1e9, mult: 5 }, 
-      { name: "National Corporation", req: 1e12, mult: 15 },
-      { name: "Fortune 500 Company", req: 10e15, mult: 50 }, 
-      { name: "Multinational Conglomerate", req: 1e20, mult: 250 },
-      { name: "Trillion Dollar Cap", req: 1e25, mult: 1500 }, 
-      { name: "Global Hegemony", req: 1e32, mult: 10000 },
-      { name: "System Conglomerate", req: 1e42, mult: 50000 }, 
-      { name: "Galactic Megacorp", req: 1e55, mult: 500000 },
-      { name: "Universal Architect", req: 1e75, mult: 10000000 }, 
-      { name: "Multiversal Monopoly", req: 1e100, mult: 1000000000 },
+      { name: "Local Business", req: 1e6, mult: 1.5 },
+      { name: "Regional Chain", req: 1e9, mult: 3 }, 
+      { name: "National Corporation", req: 1e12, mult: 8 },
+      { name: "Fortune 500 Company", req: 10e15, mult: 25 }, 
+      { name: "Multinational Conglomerate", req: 1e20, mult: 100 },
+      { name: "Trillion Dollar Cap", req: 1e25, mult: 400 }, 
+      { name: "Global Hegemony", req: 1e32, mult: 2000 },
+      { name: "System Conglomerate", req: 1e42, mult: 8000 }, 
+      { name: "Galactic Megacorp", req: 1e55, mult: 50000 },
+      { name: "Universal Architect", req: 1e75, mult: 500000 }, 
+      { name: "Multiversal Monopoly", req: 1e100, mult: 5000000 },
     ];
 
-    // INFLATED REAL-WORLD ECONOMY GAPS FOR INFINITE LIFESPAN
+    // ALL VALUES PER SECOND. Massive costs, realistic margins.
     const INITIAL_DEPARTMENTS = {
-      stand: { id: 'stand', name: 'Lemonade Stand', baseCost: 50, baseProd: 20, costMult: 1.30, type: 'capital', icon: 'Coins', desc: 'A humble, tax-free beginning.' },
-      kiosk: { id: 'kiosk', name: 'Mall Kiosk', baseCost: 25000, baseProd: 500, costMult: 1.40, type: 'capital', icon: 'Store', desc: 'Selling cheap phone accessories.' },
-      franchise: { id: 'franchise', name: 'Fast Food Franchise', baseCost: 2.5e6, baseProd: 15000, costMult: 1.45, type: 'capital', icon: 'Coffee', desc: 'Standardized burgers and minimum wage.' },
-      supermarket: { id: 'supermarket', name: 'Regional Supermarket', baseCost: 150e6, baseProd: 400000, costMult: 1.50, type: 'capital', icon: 'ShoppingCart', desc: 'High volume, low margin retail.' },
-      logistics: { id: 'logistics', name: 'Logistics Network', baseCost: 15e9, baseProd: 15e6, costMult: 1.55, type: 'capital', icon: 'Truck', desc: 'Next-day delivery supply chain.' },
-      bank: { id: 'bank', name: 'Investment Bank', baseCost: 2.5e12, baseProd: 800e6, costMult: 1.60, type: 'capital', icon: 'Bank', desc: 'Leveraging debt to buy the world.' },
-      military: { id: 'military', name: 'Private Military', baseCost: 500e12, baseProd: 50e9, costMult: 1.65, type: 'capital', icon: 'Jet', desc: 'Securing global assets by force.' },
-      orbital: { id: 'orbital', name: 'Orbital Mining Rig', baseCost: 75e15, baseProd: 3e12, costMult: 1.70, type: 'capital', icon: 'Rocket', desc: 'Harvesting rare earth metals.' },
-      asteroid: { id: 'asteroid', name: 'Asteroid Foundry', baseCost: 10e18, baseProd: 250e12, costMult: 1.75, type: 'capital', icon: 'Meteor', desc: 'Zero-G manufacturing facilities.' },
-      dyson: { id: 'dyson', name: 'Dyson Constructors', baseCost: 5e21, baseProd: 10e15, costMult: 1.80, type: 'capital', icon: 'Sun', desc: 'Encapsulating stars for energy.' },
+      stand: { id: 'stand', name: 'Lemonade Stand', baseCost: 50, baseProd: 0.10, baseUpkeep: 0, costMult: 1.30, type: 'capital', icon: 'Coins', desc: 'A humble, tax-free beginning.' },
+      kiosk: { id: 'kiosk', name: 'Mall Kiosk', baseCost: 25000, baseProd: 6, baseUpkeep: 4.5, costMult: 1.40, type: 'capital', icon: 'Store', desc: 'High rent, cheap phone accessories.' },
+      franchise: { id: 'franchise', name: 'Fast Food Franchise', baseCost: 2.5e6, baseProd: 85, baseUpkeep: 60, costMult: 1.45, type: 'capital', icon: 'Coffee', desc: 'Standardized burgers and minimum wage.' },
+      supermarket: { id: 'supermarket', name: 'Regional Supermarket', baseCost: 250e6, baseProd: 4500, baseUpkeep: 3200, costMult: 1.50, type: 'capital', icon: 'ShoppingCart', desc: 'High volume, brutal margins.' },
+      logistics: { id: 'logistics', name: 'Logistics Network', baseCost: 15e9, baseProd: 120000, baseUpkeep: 85000, costMult: 1.55, type: 'capital', icon: 'Truck', desc: 'Next-day delivery supply chain.' },
+      bank: { id: 'bank', name: 'Investment Bank', baseCost: 4.5e12, baseProd: 8e6, baseUpkeep: 5e6, costMult: 1.60, type: 'capital', icon: 'Bank', desc: 'Leveraging debt to buy the world.' },
+      military: { id: 'military', name: 'Private Military', baseCost: 800e12, baseProd: 650e6, baseUpkeep: 400e6, costMult: 1.65, type: 'capital', icon: 'Jet', desc: 'Securing global assets by force.' },
+      orbital: { id: 'orbital', name: 'Orbital Mining Rig', baseCost: 150e15, baseProd: 45e9, baseUpkeep: 30e9, costMult: 1.70, type: 'capital', icon: 'Rocket', desc: 'Harvesting rare earth metals.' },
+      asteroid: { id: 'asteroid', name: 'Asteroid Foundry', baseCost: 50e18, baseProd: 3.5e12, baseUpkeep: 2.5e12, costMult: 1.75, type: 'capital', icon: 'Meteor', desc: 'Zero-G manufacturing facilities.' },
+      dyson: { id: 'dyson', name: 'Dyson Constructors', baseCost: 10e21, baseProd: 200e12, baseUpkeep: 150e12, costMult: 1.80, type: 'capital', icon: 'Sun', desc: 'Encapsulating stars for energy.' },
       
-      startup: { id: 'startup', name: 'Data Mining Startup', baseCost: 500e6, baseProd: 10, costMult: 1.50, type: 'data', icon: 'Database', desc: 'Harvests user info for ads. Produces DATA.' },
-      social: { id: 'social', name: 'Social Media Empire', baseCost: 75e9, baseProd: 500, costMult: 1.55, type: 'data', icon: 'Smartphone', desc: 'Monetizes the attention economy.' },
-      cloud: { id: 'cloud', name: 'Cloud Infrastructure', baseCost: 10e12, baseProd: 15000, costMult: 1.60, type: 'data', icon: 'Server', desc: 'Hosts the internet.' },
-      quantum: { id: 'quantum', name: 'Quantum Computing', baseCost: 2.5e15, baseProd: 800000, costMult: 1.65, type: 'data', icon: 'Microchip', desc: 'Cracking encryption in real-time.' },
-      agi: { id: 'agi', name: 'AGI Core', baseCost: 500e15, baseProd: 45e6, costMult: 1.70, type: 'data', icon: 'Brain', desc: 'Predicting human behavior.' },
-      neural: { id: 'neural', name: 'Neural Link Net', baseCost: 100e18, baseProd: 2e9, costMult: 1.75, type: 'data', icon: 'Wifi', desc: 'Direct brain-to-market data extraction.' },
-      reality: { id: 'reality', name: 'Simulation Engine', baseCost: 50e21, baseProd: 100e9, costMult: 1.80, type: 'data', icon: 'VR', desc: 'Traps users in a digital reality.' },
+      startup: { id: 'startup', name: 'Data Mining Startup', baseCost: 500e6, baseProd: 0.1, baseUpkeep: 0, costMult: 1.50, type: 'data', icon: 'Database', desc: 'Harvests user info for ads. Produces DATA.' },
+      social: { id: 'social', name: 'Social Media Empire', baseCost: 75e9, baseProd: 5, baseUpkeep: 0, costMult: 1.55, type: 'data', icon: 'Smartphone', desc: 'Monetizes the attention economy.' },
+      cloud: { id: 'cloud', name: 'Cloud Infrastructure', baseCost: 10e12, baseProd: 150, baseUpkeep: 0, costMult: 1.60, type: 'data', icon: 'Server', desc: 'Hosts the internet.' },
+      quantum: { id: 'quantum', name: 'Quantum Computing', baseCost: 2.5e15, baseProd: 8000, baseUpkeep: 0, costMult: 1.65, type: 'data', icon: 'Microchip', desc: 'Cracking encryption in real-time.' },
+      agi: { id: 'agi', name: 'AGI Core', baseCost: 500e15, baseProd: 450000, baseUpkeep: 0, costMult: 1.70, type: 'data', icon: 'Brain', desc: 'Predicting human behavior.' },
+      neural: { id: 'neural', name: 'Neural Link Net', baseCost: 100e18, baseProd: 20e6, baseUpkeep: 0, costMult: 1.75, type: 'data', icon: 'Wifi', desc: 'Direct brain-to-market data extraction.' },
+      reality: { id: 'reality', name: 'Simulation Engine', baseCost: 50e21, baseProd: 1e9, baseUpkeep: 0, costMult: 1.80, type: 'data', icon: 'VR', desc: 'Traps users in a digital reality.' },
     };
 
     const INITIAL_POLICIES = {
-      marketing: { id: 'marketing', name: 'Aggressive Marketing', baseCost: 250, costMult: 4.0, effectType: 'click_power', effectBase: 0.1, desc: 'Increases manual revenue generation per click.' },
-      overclock: { id: 'overclock', name: 'Overclocked Relays', baseCost: 10000, costMult: 6.0, effectType: 'click_speed', effectBase: 15, desc: 'Hardware Upgrade: Decreases Hold-to-Click delay by 15ms. Maxes out late game.' },
-      synergy: { id: 'synergy', name: 'Corporate Synergy', baseCost: 150000, costMult: 5.0, effectType: 'click_synergy', effectBase: 0.01, desc: 'Clicks generate an extra 1% of your idle Capital rate.' },
-      automation: { id: 'automation', name: 'Algorithmic Trading', baseCost: 5e6, costMult: 8.0, effectType: 'auto_click', effectBase: 2, desc: 'Automatically executes trades (auto-click) per second.' },
-      taxEvasion: { id: 'taxEvasion', name: 'Offshore Accounts', baseCost: 50e6, costMult: 10.0, effectType: 'capital_mult', effectBase: 0.15, desc: 'Boosts all Capital production by 15% per level.' },
-      espionage: { id: 'espionage', name: 'Corporate Espionage', baseCost: 5e9, costMult: 12.0, effectType: 'capital_mult', effectBase: 0.50, desc: 'Steal IP to boost Capital production by 50%.' },
+      marketing: { id: 'marketing', name: 'Aggressive Marketing', baseCost: 250, costMult: 4.0, effectType: 'click_power', effectBase: 0.1, desc: 'Increases manual gross extraction.' },
+      overclock: { id: 'overclock', name: 'Overclocked Relays', baseCost: 10000, costMult: 6.0, effectType: 'click_speed', effectBase: 15, desc: 'Decreases Hold-to-Click delay by 15ms.' },
+      synergy: { id: 'synergy', name: 'Corporate Synergy', baseCost: 150000, costMult: 5.0, effectType: 'click_synergy', effectBase: 0.01, desc: 'Clicks generate an extra 1% of your Idle Gross rate.' },
+      automation: { id: 'automation', name: 'Algorithmic Trading', baseCost: 5e6, costMult: 8.0, effectType: 'auto_click', effectBase: 2, desc: 'Automatically executes manual trades per second.' },
+      taxEvasion: { id: 'taxEvasion', name: 'Offshore Accounts', baseCost: 100e6, costMult: 12.0, effectType: 'tax_reduction', effectBase: 0.02, desc: 'Subtracts 2% from your effective Tax Rate.' },
+      subsidies: { id: 'subsidies', name: 'Subsidized Maintenance', baseCost: 250e6, costMult: 10.0, effectType: 'upkeep_reduction', effectBase: 0.03, desc: 'Reduces all physical Upkeep costs by 3%.' },
+      espionage: { id: 'espionage', name: 'Corporate Espionage', baseCost: 5e9, costMult: 12.0, effectType: 'capital_mult', effectBase: 0.30, desc: 'Steal IP to boost Gross Capital production by 30%.' },
       dataBrokering: { id: 'dataBrokering', name: 'Data Brokering', baseCost: 100e9, costMult: 15.0, effectType: 'data_mult', effectBase: 0.20, desc: 'Boosts User Data extraction by 20%.' },
       lobbying: { id: 'lobbying', name: 'Government Lobbying', baseCost: 2e12, costMult: 12.0, effectType: 'ai_cost_reduction', effectBase: 0.05, desc: 'Reduces the Data cost of the R&D Department.' },
-      addiction: { id: 'addiction', name: 'Addiction Algorithms', baseCost: 50e15, costMult: 20.0, effectType: 'data_mult', effectBase: 0.75, desc: 'Keeps users scrolling. 75% Data boost per level.' },
-      aiManager: { id: 'aiManager', name: 'Executive AI', baseCost: 1e18, costMult: 500.0, effectType: 'auto_buy', effectBase: 1, desc: 'Unlocks Executive AI to automatically acquire assets.' },
+      aiManager: { id: 'aiManager', name: 'Executive AI', baseCost: 1e18, costMult: 500.0, effectType: 'auto_buy', effectBase: 1, desc: 'Unlocks Executive AI to automatically acquire assets safely.' },
     };
 
     const PRESTIGE_UPGRADES = {
-      monopoly: { id: 'monopoly', name: 'Global Monopoly', cost: 1, costMult: 3.0, effectType: 'global_mult', effectBase: 0.50, desc: '50% global multiplier to ALL production across resets.' },
-      subsidies: { id: 'subsidies', name: 'Government Bailouts', cost: 1, costMult: 5.0, effectType: 'cost_crunch', effectBase: 0.02, desc: 'Reduces the inflation of all corporate asset costs slightly.' },
-      hft: { id: 'hft', name: 'High-Frequency Trading', cost: 2, costMult: 6.0, effectType: 'time_warp', effectBase: 0.05, desc: 'Market cycles run 5% faster for your corporation per level.' },
-      angelInvestors: { id: 'angelInvestors', name: 'Angel Investors', cost: 3, costMult: 10.0, effectType: 'base_data', effectBase: 100, desc: 'Base User Data generation per hour (survives buyouts!).' },
-      omnicorp: { id: 'omnicorp', name: 'Interstellar Franchising', cost: 5, costMult: 12.0, effectType: 'global_mult', effectBase: 2.0, desc: 'Massive 200% global multiplier to ALL production.' },
-      singularity: { id: 'singularity', name: 'Singularity Patents', cost: 10, costMult: 20.0, effectType: 'ai_cost_reduction', effectBase: 0.10, desc: 'Reduces R&D costs massively across all lifetimes.' },
-      chronos: { id: 'chronos', name: 'High-Velocity Trading', cost: 20, costMult: 25.0, effectType: 'time_warp', effectBase: 0.25, desc: 'Bends automated logic to run markets 25% faster.' },
+      monopoly: { id: 'monopoly', name: 'Global Monopoly', cost: 1, costMult: 3.0, effectType: 'global_mult', effectBase: 0.30, desc: '30% global multiplier to Gross production across resets.' },
+      bailouts: { id: 'bailouts', name: 'Govt Bailouts', cost: 2, costMult: 4.0, effectType: 'cost_crunch', effectBase: 0.02, desc: 'Reduces corporate asset costs permanently.' },
+      loopholes: { id: 'loopholes', name: 'Tax Loopholes', cost: 3, costMult: 5.0, effectType: 'tax_reduction', effectBase: 0.05, desc: 'Permanently reduces tax rate by 5%.' },
+      angelInvestors: { id: 'angelInvestors', name: 'Angel Investors', cost: 5, costMult: 8.0, effectType: 'base_data', effectBase: 2, desc: 'Base User Data generation per second (survives buyouts!).' },
+      omnicorp: { id: 'omnicorp', name: 'Interstellar Franchising', cost: 10, costMult: 12.0, effectType: 'global_mult', effectBase: 1.5, desc: 'Massive 150% global multiplier to ALL production.' },
+      singularity: { id: 'singularity', name: 'Singularity Patents', cost: 15, costMult: 15.0, effectType: 'ai_cost_reduction', effectBase: 0.10, desc: 'Reduces R&D costs massively across all lifetimes.' },
+      chronos: { id: 'chronos', name: 'High-Velocity Trading', cost: 25, costMult: 20.0, effectType: 'time_warp', effectBase: 0.15, desc: 'Bends automated logic to run markets 15% faster.' },
     };
 
     const ICON_MAP = {
@@ -202,32 +228,46 @@
       Landmark: "fa-solid fa-landmark", ShieldAlert: "fa-solid fa-shield-alt", Bank: "fa-solid fa-university",
       Jet: "fa-solid fa-fighter-jet", Rocket: "fa-solid fa-rocket", Meteor: "fa-solid fa-meteor",
       Sun: "fa-solid fa-sun", Microchip: "fa-solid fa-microchip", Brain: "fa-solid fa-brain",
-      Wifi: "fa-solid fa-wifi", VR: "fa-solid fa-vr-cardboard", ChartLine: "fa-solid fa-chart-line"
+      Wifi: "fa-solid fa-wifi", VR: "fa-solid fa-vr-cardboard", ChartLine: "fa-solid fa-chart-line",
+      Skull: "fa-solid fa-skull-crossbones"
     };
 
-    const MILESTONE_THRESHOLDS = [10, 25, 50, 100, 250, 500, 1000];
+    const MILESTONE_THRESHOLDS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
 
     const formatNumber = (num, notation = 'standard') => {
-      if (!num || isNaN(num) || !isFinite(num)) return "0";
-      if (num < 1000) return Math.floor(num).toString();
-      if (notation === 'scientific' || num > 1e60) return num.toExponential(2).replace('e+', 'e');
-      const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "V"];
-      const suffixNum = Math.floor(Math.log10(num) / 3);
-      if (suffixNum >= suffixes.length) return num.toExponential(2).replace('e+', 'e');
-      let shortValue = num / Math.pow(10, suffixNum * 3);
-      return shortValue.toFixed(2) + suffixes[suffixNum];
+      if (num === 0 || !num || isNaN(num) || !isFinite(num)) return "0";
+      const isNeg = num < 0;
+      const absNum = Math.abs(num);
+      let result = "";
+
+      if (absNum < 1000) result = (absNum % 1 !== 0) ? absNum.toFixed(1) : Math.floor(absNum).toString();
+      else if (notation === 'scientific' || absNum >= 1e63) {
+        result = absNum.toExponential(2).replace('e+', 'e');
+      } else {
+        const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "V"];
+        const suffixNum = Math.floor(Math.log10(absNum) / 3);
+        let shortValue = absNum / Math.pow(10, suffixNum * 3);
+        result = shortValue.toFixed(2) + suffixes[suffixNum];
+      }
+      return (isNeg ? "-" : "") + result;
     };
-    const formatCurrency = (num, notation = 'standard') => "$" + formatNumber(num, notation);
+    const formatCurrency = (num, notation = 'standard') => {
+      const isNeg = num < 0;
+      return (isNeg ? "-$" : "$") + formatNumber(Math.abs(num), notation);
+    };
 
     const calculateCost = (baseCost, costMult, currentLevel, amount, costCrunchLevel = 0) => {
-      const actualMult = costMult * Math.pow(0.98, costCrunchLevel);
+      // Softcap cost crunch so things don't become free
+      const crunchFactor = Math.max(0.5, Math.pow(0.98, costCrunchLevel));
+      const actualMult = costMult * crunchFactor;
       if (amount === 1) return baseCost * Math.pow(actualMult, currentLevel);
       if (actualMult === 1) return baseCost * amount;
       return baseCost * Math.pow(actualMult, currentLevel) * (Math.pow(actualMult, amount) - 1) / (actualMult - 1);
     };
 
     const calculateMaxAffordable = (baseCost, costMult, currentLevel, currency, costCrunchLevel = 0) => {
-      const actualMult = costMult * Math.pow(0.98, costCrunchLevel);
+      const crunchFactor = Math.max(0.5, Math.pow(0.98, costCrunchLevel));
+      const actualMult = costMult * crunchFactor;
       if (currency <= 0) return 0;
       const currentCost = baseCost * Math.pow(actualMult, currentLevel);
       if (currency < currentCost) return 0;
@@ -275,14 +315,9 @@
     };
 
     function App() {
-      // --- IMMERSION STATES ---
       const [preBoot, setPreBoot] = useState(true);
       const [scolding, setScolding] = useState(false);
-      const [isCrashed, setIsCrashed] = useState(false);
-      const [instability, setInstability] = useState(0);
-      const [evasionLogs, setEvasionLogs] = useState([]);
-
-      // --- GAME STATES ---
+      
       const [gameState, setGameState] = useState({
         capital: 0, data: 0, equity: 0, lifetimeCapital: 0, runCapital: 0, buyouts: 0,
         departmentRegistry: { ...INITIAL_DEPARTMENTS }, policyRegistry: { ...INITIAL_POLICIES }, prestigeRegistry: { ...PRESTIGE_UPGRADES },
@@ -299,8 +334,9 @@
       const stateRef = useRef(gameState);
       useEffect(() => { stateRef.current = gameState; }, [gameState]);
 
-      const [rates, setRates] = useState({ capital: 0, data: 0 });
-      const [multipliers, setMultipliers] = useState({ dataBoost: 1, equityBoost: 1, capitalMult: 1, rankBoost: 1, timeBoost: 1 });
+      // Advanced Finances Tracking
+      const [finances, setFinances] = useState({ gross: 0, upkeep: 0, profit: 0, taxRate: 0, taxAmount: 0, net: 0, dataRate: 0, isBankrupt: false, dilation: 1 });
+      
       const [floatingTexts, setFloatingTexts] = useState([]);
       const [isResearching, setIsResearching] = useState(false);
       const [saveNotice, setSaveNotice] = useState("");
@@ -315,69 +351,10 @@
       const hasProcessedOffline = useRef(false);
       const importRef = useRef(null);
 
-      // --- ENGINE IMMERSION ---
-      useEffect(() => {
-        const checkDevTools = () => {
-          const threshold = 160;
-          if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-            setInstability(prev => prev + 2);
-          }
-        };
-        window.addEventListener('resize', checkDevTools);
-        return () => window.removeEventListener('resize', checkDevTools);
-      }, []);
-
-      useEffect(() => {
-        if (preBoot) return;
-        let flashInterval;
-        let leaveTime = 0;
-
-        const handleVisibilityChange = () => {
-          if (document.hidden) {
-            leaveTime = Date.now();
-            let flip = false;
-            flashInterval = setInterval(() => {
-              document.title = flip ? "ENGINE IDLE" : "RETURN TO SIMULATION";
-              flip = !flip;
-            }, 300);
-          } else {
-            clearInterval(flashInterval);
-            document.title = "Axiom Syndicate: Infinite Hegemony"; 
-            if (leaveTime > 0) {
-              const secondsAway = Math.floor((Date.now() - leaveTime) / 1000);
-              if (secondsAway >= 3) {
-                 const newLog = { id: Date.now(), msg: atob("Pj4gQUZLIFRJTUVPVVQgTE9HR0VELiBTWVNURU0gSURMRSBGT1Ig") + secondsAway + atob("IFNFQ09ORFMuIEFVVE8tRVhUUkFDVElPTiBDT05USU5VRVMu") };
-                 setEvasionLogs(prev => [...prev, newLog]);
-                 setTimeout(() => setEvasionLogs(prev => prev.filter(l => l.id !== newLog.id)), 8000);
-              }
-            }
-            leaveTime = 0;
-          }
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-          document.removeEventListener('visibilitychange', handleVisibilityChange);
-          if (flashInterval) clearInterval(flashInterval);
-        };
-      }, [preBoot]);
-
-      useEffect(() => {
-        const handleFullscreenChange = () => {
-          if (!document.fullscreenElement && !preBoot && !isCrashed) setScolding(true);
-          else setScolding(false);
-        };
-        document.addEventListener("fullscreenchange", handleFullscreenChange);
-        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      }, [preBoot, isCrashed]);
-
       const initiateConnection = async () => {
         try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch (err) {}
-        setPreBoot(false); setScolding(false); setIsCrashed(false);
+        setPreBoot(false); setScolding(false);
       };
-
-      const currentLore = useMemo(() => {
-         return LORE_MESSAGES.slice().reverse().find(l => l.req(gameState))?.text || LORE_MESSAGES[0].text;
-      }, [gameState.stats.totalClicks, gameState.departments.stand, gameState.departments.supermarket, gameState.departments.bank, gameState.capital, gameState.buyouts, gameState.data]);
 
       // --- SAVE/LOAD ---
       useEffect(() => {
@@ -409,7 +386,7 @@
         const stateToSave = { ...stateRef.current, lastTick: Date.now() };
         localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
         lastSaveTime.current = Date.now();
-        if (manual) showToast("Axiom Core Synced.");
+        if (manual) showToast("System Synchronized.");
       }, []);
 
       const showToast = (msg) => { setSaveNotice(msg); setTimeout(() => setSaveNotice(""), 2000); };
@@ -422,33 +399,36 @@
           }, isAdd ? 0 : 1);
       }, []);
 
-      const getAddedProd = useCallback((dep, amountToBuy, currentCount) => {
-          const newCount = currentCount + amountToBuy;
-          const currentMilestone = getMilestoneBoost(currentCount);
-          const newMilestone = getMilestoneBoost(newCount);
+      // Evaluates the raw financial output of a department
+      const evaluateDepartment = useCallback((dep, amount, currentState) => {
+          if (!amount) return { gross: 0, upkeep: 0, data: 0 };
+          
+          const mBoost = getMilestoneBoost(amount);
+          const rBoost = getRankInfo(currentState.lifetimeCapital).current.mult;
+          const eqBoost = calcEffect(currentState.prestigeRegistry, currentState.prestigeUpgrades, 'global_mult', false);
+          const dBoost = applyDilation(1 + (Math.sqrt(currentState.data) * 0.01)); // Dilation applied to data buff
+          const capMult = calcEffect(currentState.policyRegistry, currentState.policies, 'capital_mult', false);
+          const dataPolEff = calcEffect(currentState.policyRegistry, currentState.policies, 'data_mult', false);
+          
+          let upkReduc = calcEffect(currentState.policyRegistry, currentState.policies, 'upkeep_reduction', true);
+          const actualUpkeepRate = Math.max(0.1, 1 - upkReduc);
 
-          const currentBaseProd = currentCount * dep.baseProd * currentMilestone;
-          const newBaseProd = newCount * dep.baseProd * newMilestone;
+          let totalMult = eqBoost * rBoost * mBoost;
+          totalMult = applyDilation(totalMult); // Master Dilation
 
-          const addedBase = newBaseProd - currentBaseProd;
-
-          const rankBoost = getRankInfo(stateRef.current.lifetimeCapital).current.mult;
-          const dBoost = 1 + (Math.sqrt(stateRef.current.data) * 0.01);
-          const eqBoost = calcEffect(stateRef.current.prestigeRegistry, stateRef.current.prestigeUpgrades, 'global_mult', false);
-          const capMult = calcEffect(stateRef.current.policyRegistry, stateRef.current.policies, 'capital_mult', false);
-          const dataPolEff = calcEffect(stateRef.current.policyRegistry, stateRef.current.policies, 'data_mult', false);
-
-          let finalAdded = addedBase;
-          if(dep.type === 'capital') finalAdded *= dBoost * eqBoost * capMult * rankBoost;
-          if(dep.type === 'data') finalAdded *= eqBoost * dataPolEff * rankBoost;
-
-          return finalAdded;
+          if (dep.type === 'capital') {
+              return { 
+                gross: amount * dep.baseProd * totalMult * dBoost * capMult, 
+                upkeep: amount * (dep.baseUpkeep || 0) * actualUpkeepRate, 
+                data: 0 
+              };
+          } else {
+              return { 
+                gross: 0, upkeep: 0, 
+                data: amount * dep.baseProd * totalMult * dataPolEff 
+              };
+          }
       }, [calcEffect]);
-
-      const getTotalProd = useCallback((dep, currentCount) => {
-          if (currentCount === 0) return 0;
-          return getAddedProd(dep, currentCount, 0);
-      }, [getAddedProd]);
 
       // --- HOLD MECHANICS ---
       const activeHoldRef = useRef(null);
@@ -457,7 +437,7 @@
       const triggerBuyAction = useCallback((type, key) => {
         setGameState(prev => {
           let cost, canAfford = false, amountToBuy = prev.buyMultiplier;
-          const drift = prev.prestigeUpgrades.subsidies || 0;
+          const drift = prev.prestigeUpgrades.bailouts || 0;
           let nextState = { ...prev };
 
           if (type === 'department') {
@@ -470,6 +450,8 @@
             
             cost = calculateCost(dep.baseCost, dep.costMult, currentLevel, amountToBuy, drift);
             canAfford = currency >= cost;
+            
+            // BANKRUPTCY SAFETY: Don't allow max buy to drop capital to 0 if net is negative (handled mostly by player awareness, but let's let them fail if they want to)
             if (canAfford) {
               nextState.capital = prev.capital - cost;
               nextState.departments = { ...prev.departments, [key]: currentLevel + amountToBuy };
@@ -560,63 +542,112 @@
         let animationFrameId;
         const gameLoop = () => {
           const now = Date.now();
-          if (preBoot || isCrashed || scolding) {
-             animationFrameId = requestAnimationFrame(gameLoop);
-             return;
+          if (preBoot || scolding) {
+              animationFrameId = requestAnimationFrame(gameLoop);
+              return;
           }
 
           setGameState(prev => {
             const deltaMs = now - prev.lastTick;
             if (deltaMs < 50) return prev; 
 
-            if (deltaMs > 60000 && hasProcessedOffline.current) {
-                const deltaSec = deltaMs / 1000;
-                const rInfo = getRankInfo(prev.lifetimeCapital);
-                const rankBoost = rInfo.current.mult;
-                const dBoost = 1 + (Math.sqrt(prev.data) * 0.01);
-                const eqBoost = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false);
-                const capMult = calcEffect(prev.policyRegistry, prev.policies, 'capital_mult', false);
-                const dataPolEff = calcEffect(prev.policyRegistry, prev.policies, 'data_mult', false);
-                
-                let capRate = 0, datRate = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'base_data', true) / 3600;
-                Object.keys(prev.departmentRegistry).forEach(key => {
-                  const dep = prev.departmentRegistry[key], amount = prev.departments[key] || 0;
-                  if (amount > 0) {
-                    const mBoost = getMilestoneBoost(amount);
-                    if (dep.type === 'capital') capRate += amount * (dep.baseProd / 3600) * dBoost * eqBoost * capMult * rankBoost * mBoost;
-                    else datRate += amount * (dep.baseProd / 3600) * eqBoost * dataPolEff * rankBoost * mBoost;
-                  }
-                });
-                
-                const tCapGain = capRate * deltaSec;
-                const tDatGain = datRate * deltaSec;
-                
-                setOfflineReport({ time: deltaSec, capital: tCapGain, data: tDatGain });
-                return { 
-                    ...prev, 
-                    lastTick: now, 
-                    capital: safeAdd(prev.capital, tCapGain), 
-                    lifetimeCapital: safeAdd(prev.lifetimeCapital, tCapGain), 
-                    runCapital: safeAdd(prev.runCapital, tCapGain), 
-                    data: safeAdd(prev.data, tDatGain) 
-                };
-            }
+            // Time Warp Dilation
+            let rawTimeBoost = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'time_warp', false);
+            const timeBoost = applyDilation(rawTimeBoost);
 
-            const safeDeltaMs = Math.min(deltaMs, 2592000000); 
-            let deltaSec = safeDeltaMs / 1000;
+            let deltaSec = Math.min(deltaMs, 2592000000) / 1000 * timeBoost; // Cap at 1 month of offline time
             const newState = { ...prev, lastTick: now };
-            
-            const timeBoost = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'time_warp', false);
-            deltaSec *= timeBoost;
             newState.stats.timePlayed += deltaSec;
 
-            const rankInfo = getRankInfo(newState.lifetimeCapital);
-            const rankBoost = rankInfo.current.mult;
+            // Finance Calcs
+            let totalGross = 0, totalUpkeep = 0, totalData = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'base_data', true);
+            
+            Object.keys(newState.departmentRegistry).forEach(key => {
+                const dep = newState.departmentRegistry[key];
+                const amount = newState.departments[key] || 0;
+                if (amount > 0) {
+                    const evalRes = evaluateDepartment(dep, amount, newState);
+                    totalGross += evalRes.gross;
+                    totalUpkeep += evalRes.upkeep;
+                    totalData += evalRes.data;
+                }
+            });
 
+            // Active Monopoly Buff
             if (newState.monopolyBuff.active && now > newState.monopolyBuff.expiresAt) newState.monopolyBuff = { active: false, expiresAt: 0, mult: 1 };
             const activeMonopolyMult = newState.monopolyBuff.active ? newState.monopolyBuff.mult : 1;
+            totalGross *= activeMonopolyMult;
+            totalData *= activeMonopolyMult;
 
-            if (!newState.marketBoom && Math.random() < (0.005 * deltaSec)) { 
+            // Calculate Taxes
+            const profitBeforeTax = totalGross - totalUpkeep;
+            let effectiveTaxRate = 0;
+            
+            if (profitBeforeTax > 0) {
+                // Find highest applicable bracket
+                for (let i = TAX_BRACKETS.length - 1; i >= 0; i--) {
+                    if (profitBeforeTax >= TAX_BRACKETS[i].threshold) {
+                        effectiveTaxRate = TAX_BRACKETS[i].rate;
+                        break;
+                    }
+                }
+            }
+            
+            // Apply Evasion & Loopholes
+            const evasionDrop = calcEffect(newState.policyRegistry, newState.policies, 'tax_reduction', true) + calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'tax_reduction', true);
+            effectiveTaxRate = Math.max(0, effectiveTaxRate - evasionDrop);
+
+            const taxAmount = profitBeforeTax > 0 ? profitBeforeTax * effectiveTaxRate : 0;
+            const netCapitalRate = totalGross - totalUpkeep - taxAmount;
+
+            // BANKRUPTCY CHECK
+            const isBankrupt = newState.capital <= 0 && netCapitalRate < 0;
+            
+            if (isBankrupt) {
+                newState.capital = 0;
+                totalData = 0; // Servers shut off
+            }
+
+            // Apply Auto Clicks (Gross Generation, bypasses upkeep but hits taxes?) 
+            // For balance, auto clicks add to gross.
+            const autoClicks = calcEffect(newState.policyRegistry, newState.policies, 'auto_click', true);
+            let autoGain = 0;
+            if (autoClicks > 0 && !isBankrupt) {
+                const basePower = calcEffect(newState.policyRegistry, newState.policies, 'click_power', true);
+                const clickSynergy = calcEffect(newState.policyRegistry, newState.policies, 'click_synergy', true);
+                const eqBoost = applyDilation(calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'global_mult', false));
+                
+                autoGain = ((0.5 + basePower + (totalGross * clickSynergy)) * eqBoost * activeMonopolyMult) * autoClicks;
+                // Treat autogain as pure net for simplicity to help them out of holes
+            }
+
+            setFinances({
+                gross: totalGross, upkeep: totalUpkeep, profit: profitBeforeTax, 
+                taxRate: effectiveTaxRate, taxAmount, net: netCapitalRate, 
+                dataRate: totalData, isBankrupt, dilation: applyDilation(1e25) / 1e25 // Tracking sample dilation
+            });
+
+            const tickNet = netCapitalRate * deltaSec;
+            const tickAuto = autoGain * deltaSec;
+            const totalCapChange = tickNet + tickAuto;
+
+            if (!hasProcessedOffline.current) {
+                hasProcessedOffline.current = true;
+                if (deltaSec > 60 && (totalCapChange !== 0 || totalData > 0)) setOfflineReport({ time: deltaSec, capital: totalCapChange, data: totalData * deltaSec });
+            }
+
+            if (totalCapChange !== 0) { 
+                newState.capital = safeAdd(newState.capital, totalCapChange); 
+                if (newState.capital < 0) newState.capital = 0; // Hard floor
+                if (totalCapChange > 0) {
+                    newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, totalCapChange); 
+                    newState.runCapital = safeAdd(newState.runCapital, totalCapChange); 
+                }
+            }
+            if (totalData > 0 && !isBankrupt) newState.data = safeAdd(newState.data, totalData * deltaSec);
+
+            // Market Booms
+            if (!newState.marketBoom && Math.random() < (0.005 * deltaSec) && !isBankrupt) { 
               const r = Math.random();
               newState.marketBoom = { 
                 x: Math.floor(Math.random() * 80) + 10, y: Math.floor(Math.random() * 80) + 10, 
@@ -625,61 +656,22 @@
             }
             if (newState.marketBoom && now > newState.marketBoom.expiresAt) newState.marketBoom = null;
 
-            const dataBoost = 1 + (Math.sqrt(newState.data) * 0.01);
-            const equityBoost = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'global_mult', false);
-            const capitalMult = calcEffect(newState.policyRegistry, newState.policies, 'capital_mult', false);
-            const dataPolicyEff = calcEffect(newState.policyRegistry, newState.policies, 'data_mult', false);
-            const baseData = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'base_data', true);
-
-            let capitalRate = 0, dataRate = baseData / 3600; 
-
-            Object.keys(newState.departmentRegistry).forEach(key => {
-              const dep = newState.departmentRegistry[key];
-              const amount = newState.departments[key] || 0;
-              if (amount > 0) {
-                const milestoneBoost = getMilestoneBoost(amount);
-                if (dep.type === 'capital') capitalRate += amount * (dep.baseProd / 3600) * dataBoost * equityBoost * capitalMult * rankBoost * milestoneBoost;
-                else if (dep.type === 'data') dataRate += amount * (dep.baseProd / 3600) * equityBoost * dataPolicyEff * rankBoost * milestoneBoost;
-              }
-            });
-
-            capitalRate *= activeMonopolyMult; dataRate *= activeMonopolyMult;
-
-            const autoClicks = calcEffect(newState.policyRegistry, newState.policies, 'auto_click', true);
-            let autoGain = 0;
-            if (autoClicks > 0) {
-                const basePower = calcEffect(newState.policyRegistry, newState.policies, 'click_power', true);
-                const clickSynergy = calcEffect(newState.policyRegistry, newState.policies, 'click_synergy', true);
-                autoGain = ((0.5 + basePower + (capitalRate * clickSynergy)) * equityBoost * activeMonopolyMult) * autoClicks * deltaSec;
-            }
-
-            setRates({ capital: capitalRate, data: dataRate });
-            setMultipliers({ dataBoost, equityBoost, capitalMult, rankBoost, timeBoost });
-
-            const totalCapGain = (capitalRate * deltaSec) + autoGain;
-            const totalDataGain = dataRate * deltaSec;
-
-            if (!hasProcessedOffline.current) {
-                hasProcessedOffline.current = true;
-                if (deltaSec > 60 && (totalCapGain > 0 || totalDataGain > 0)) setOfflineReport({ time: deltaSec, capital: totalCapGain, data: totalDataGain });
-            }
-
-            if (totalCapGain > 0) { 
-                newState.capital = safeAdd(newState.capital, totalCapGain); 
-                newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, totalCapGain); 
-                newState.runCapital = safeAdd(newState.runCapital, totalCapGain); 
-            }
-            if (totalDataGain > 0) newState.data = safeAdd(newState.data, totalDataGain);
-
-            if (newState.policies.aiManager > 0 && newState.settings.aiManagerOn && Math.random() < (0.5 * deltaSec)) {
-               const drift = newState.prestigeUpgrades.subsidies || 0;
+            // AI Manager Auto-Buy (Only safe buys if not bankrupt)
+            if (newState.policies.aiManager > 0 && newState.settings.aiManagerOn && !isBankrupt && Math.random() < (0.5 * deltaSec)) {
+               const drift = newState.prestigeUpgrades.bailouts || 0;
                let bestBuy = null;
                Object.keys(newState.departmentRegistry).forEach(key => {
                    const dep = newState.departmentRegistry[key];
                    const count = newState.departments[key] || 0;
-                   const currency = newState.capital; 
                    const cost = calculateCost(dep.baseCost, dep.costMult, count, 1, drift);
-                   if (currency >= cost) { if (!bestBuy || cost > bestBuy.cost) bestBuy = { key, cost }; }
+                   
+                   // Safety check: Don't let AI push upkeep above 80% of gross
+                   const testEval = evaluateDepartment(dep, count + 1, newState);
+                   const isSafe = (totalUpkeep + testEval.upkeep) < (totalGross * 0.8) || dep.type === 'data';
+
+                   if (newState.capital >= cost && isSafe) { 
+                       if (!bestBuy || cost > bestBuy.cost) bestBuy = { key, cost }; 
+                   }
                });
                if (bestBuy) {
                    newState.capital -= bestBuy.cost;
@@ -698,13 +690,25 @@
         };
         animationFrameId = requestAnimationFrame(gameLoop);
         return () => cancelAnimationFrame(animationFrameId);
-      }, [calcEffect, preBoot, isCrashed, scolding]);
+      }, [calcEffect, evaluateDepartment, preBoot, scolding]);
 
       // --- ACTIONS ---
       const handleManualClick = useCallback((cx, cy) => {
         setGameState(prev => {
           const activeMonopolyMult = prev.monopolyBuff.active ? prev.monopolyBuff.mult : 1;
-          const gain = ( (0.5 + calcEffect(prev.policyRegistry, prev.policies, 'click_power', true)) + (rates.capital * calcEffect(prev.policyRegistry, prev.policies, 'click_synergy', true)) ) * calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false) * activeMonopolyMult;
+          const clickSynergy = calcEffect(prev.policyRegistry, prev.policies, 'click_synergy', true);
+          const basePower = calcEffect(prev.policyRegistry, prev.policies, 'click_power', true);
+          const eqBoost = applyDilation(calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false));
+          
+          let grossBase = 0;
+          Object.keys(prev.departmentRegistry).forEach(key => {
+              if (prev.departmentRegistry[key].type === 'capital') {
+                  grossBase += evaluateDepartment(prev.departmentRegistry[key], prev.departments[key] || 0, prev).gross;
+              }
+          });
+
+          // Clicks are raw un-taxed income bursts to help escape bankruptcy
+          const gain = (0.5 + basePower + (grossBase * clickSynergy)) * eqBoost * activeMonopolyMult;
           
           if (clickContainerRef.current && cx !== undefined && cy !== undefined) {
             const rect = clickContainerRef.current.getBoundingClientRect();
@@ -718,7 +722,7 @@
               stats: { ...prev.stats, totalClicks: prev.stats.totalClicks + 1 } 
           };
         });
-      }, [rates.capital, calcEffect]);
+      }, [calcEffect, evaluateDepartment]);
 
       const addFloatingText = (x, y, text, colorCode = 'emerald') => {
         const id = Date.now() + Math.random();
@@ -732,13 +736,13 @@
           const type = prev.marketBoom.type;
           const newState = { ...prev, marketBoom: null, stats: { ...prev.stats, marketBooms: prev.stats.marketBooms + 1 } };
           if (type === 'cash') {
-            const reward = Math.max(50, rates.capital * 3600 * 2); 
+            const reward = Math.max(50, finances.gross * 60 * 5); // 5 minutes of gross
             addFloatingText(window.innerWidth/2, window.innerHeight/2, `+${formatCurrency(reward, prev.settings.notation)} Extraction!`, 'emerald');
             newState.capital = safeAdd(newState.capital, reward); 
             newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, reward); 
             newState.runCapital = safeAdd(newState.runCapital, reward);
           } else if (type === 'data') {
-            const reward = Math.max(5, rates.data * 3600 * 2);
+            const reward = Math.max(5, finances.dataRate * 60 * 5);
             addFloatingText(window.innerWidth/2, window.innerHeight/2, `+${formatNumber(reward, prev.settings.notation)} Data Breach!`, 'cyan');
             newState.data = safeAdd(newState.data, reward);
           } else if (type === 'monopoly') {
@@ -760,9 +764,10 @@
         const aiReducSum = calcEffect(gameState.policyRegistry, gameState.policies, 'ai_cost_reduction', true) + calcEffect(gameState.prestigeRegistry, gameState.prestigeUpgrades, 'ai_cost_reduction', true);
         const discountMult = Math.max(0.01, 1 - aiReducSum); 
         
-        if (gameState.researchFocus === 'department') return { type: 'data', amount: 10e9 * Math.pow(20, procStats.deps) * discountMult };
-        if (gameState.researchFocus === 'policy') return { type: 'data', amount: 50e9 * Math.pow(20, procStats.pols) * discountMult };
-        return { type: 'equity', amount: Math.floor(5 * Math.pow(3, procStats.pres)) };
+        // Procedural costs scale absurdly to enforce the 10-year wall
+        if (gameState.researchFocus === 'department') return { type: 'data', amount: 50e9 * Math.pow(1000, procStats.deps) * discountMult };
+        if (gameState.researchFocus === 'policy') return { type: 'data', amount: 150e9 * Math.pow(1000, procStats.pols) * discountMult };
+        return { type: 'equity', amount: Math.floor(10 * Math.pow(10, procStats.pres)) };
       }, [gameState.researchFocus, gameState.policyRegistry, gameState.prestigeRegistry, gameState.prestigeUpgrades, gameState.policies, calcEffect, procStats]);
 
       const executeResearch = useCallback(async () => {
@@ -775,7 +780,7 @@
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        const prefixes = ["Global", "Synergistic", "Dynamic", "Apex", "Prime", "Quantum", "Vanguard", "Omni", "Hyper", "Neo", "Cosmic", "Stellar", "Astral", "Ethereal"];
+        const prefixes = ["Global", "Synergistic", "Dynamic", "Apex", "Prime", "Quantum", "Vanguard", "Omni", "Hyper", "Neo", "Cosmic", "Stellar", "Astral", "Ethereal", "Hegemonic"];
         const id = `proc_${Date.now()}_${Math.floor(Math.random()*1000)}`;
         let newItem;
         
@@ -784,22 +789,24 @@
           newItem = {
             id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${isData ? 'Sub-Network' : 'Subsidiary'}`,
             desc: `Tier ${procStats.deps + 1} Artificial Construct.`, 
-            baseCost: 50e21 * Math.pow(1000, procStats.deps), 
-            baseProd: 500e12 * Math.pow(100, procStats.deps),
-            costMult: 1.50 + (Math.random() * 0.2), type: isData ? 'data' : 'capital', icon: isData ? 'Network' : 'Building'
+            baseCost: 100e24 * Math.pow(1e6, procStats.deps), 
+            baseProd: 5e15 * Math.pow(1e4, procStats.deps),
+            baseUpkeep: isData ? 0 : 4e15 * Math.pow(1e4, procStats.deps), // 80% upkeep margin
+            costMult: 1.85 + (Math.random() * 0.15), type: isData ? 'data' : 'capital', icon: isData ? 'Network' : 'Building'
           };
         } else if (gameState.researchFocus === 'policy') {
-          const eType = Math.random() > 0.5 ? 'data_mult' : 'capital_mult';
+          const r = Math.random();
+          const eType = r > 0.6 ? 'tax_reduction' : r > 0.3 ? 'upkeep_reduction' : 'capital_mult';
           newItem = {
-            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Strategy`, desc: `Tier ${procStats.pols + 1} Algorithmic Protocol.`, 
-            baseCost: 50e21 * Math.pow(1000, procStats.pols), costMult: 8 + Math.random() * 4,
-            effectType: eType, effectBase: 0.5 * (procStats.pols + 1)
+            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Protocol`, desc: `Tier ${procStats.pols + 1} System Override.`, 
+            baseCost: 500e24 * Math.pow(1e6, procStats.pols), costMult: 15 + Math.random() * 5,
+            effectType: eType, effectBase: eType === 'capital_mult' ? 1.0 * (procStats.pols + 1) : 0.01 // Soft 1% for reduction stats
           };
         } else {
           newItem = {
-            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Restructuring`, desc: `Tier ${procStats.pres + 1} Universal Law Override.`, 
-            cost: 20 * Math.pow(4, procStats.pres), costMult: 4 + Math.random() * 2,
-            effectType: 'global_mult', effectBase: 1.0 * (procStats.pres + 1)
+            id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Reality Shift`, desc: `Tier ${procStats.pres + 1} Dimensional Hegemony.`, 
+            cost: 50 * Math.pow(10, procStats.pres), costMult: 8 + Math.random() * 4,
+            effectType: 'global_mult', effectBase: 2.0 * (procStats.pres + 1)
           };
         }
         
@@ -826,15 +833,15 @@
       // --- MODALS & HELPERS ---
       
       const calculateBuyoutRewards = () => {
-        const baseReq = 1000000000 * Math.pow(1000, gameState.buyouts); 
+        const baseReq = 1000000000 * Math.pow(10000, gameState.buyouts); // Massively harder scaling
         if (gameState.runCapital < baseReq) return 0;
-        return Math.floor(Math.pow(gameState.runCapital / baseReq, 0.10)); 
+        return Math.floor(Math.pow(gameState.runCapital / baseReq, 0.15)); 
       };
 
       const getNextBuyoutReq = () => {
-        const baseReq = 1000000000 * Math.pow(1000, gameState.buyouts);
+        const baseReq = 1000000000 * Math.pow(10000, gameState.buyouts);
         const currentRewards = calculateBuyoutRewards();
-        return baseReq * Math.pow(currentRewards + 1, 10); 
+        return baseReq * Math.pow(currentRewards + 1, 1 / 0.15); 
       };
       
       const confirmBuyout = () => {
@@ -855,52 +862,51 @@
 
       const nota = gameState.settings.notation;
       const rankInfo = getRankInfo(gameState.lifetimeCapital);
-      const glitchClass = instability > 8 ? 'system-glitch-3' : instability > 5 ? 'system-glitch-2' : instability > 3 ? 'system-glitch-1' : '';
+      
+      // Get derived department states for UI
+      const uiDeps = useMemo(() => {
+          return Object.entries(gameState.departmentRegistry).map(([key, dep]) => {
+              const count = gameState.departments[key] || 0;
+              const drift = gameState.prestigeUpgrades.bailouts || 0;
+              const maxBuy = calculateMaxAffordable(dep.baseCost, dep.costMult, count, gameState.capital, drift);
+              const amountToBuy = gameState.buyMultiplier === -1 ? maxBuy : gameState.buyMultiplier;
+              const cost = calculateCost(dep.baseCost, dep.costMult, count, Math.max(1, amountToBuy), drift);
+              const canAfford = gameState.capital >= cost && (gameState.buyMultiplier !== -1 || maxBuy > 0);
+              
+              const currentEval = evaluateDepartment(dep, count, gameState);
+              const nextEval = evaluateDepartment(dep, count + Math.max(1, amountToBuy), gameState);
+              
+              const addedGross = nextEval.gross - currentEval.gross;
+              const addedUpkeep = nextEval.upkeep - currentEval.upkeep;
+              const addedData = nextEval.data - currentEval.data;
 
-      // --- PRE-BOOT IMMERSION SCREEN ---
+              return { key, dep, count, cost, canAfford, currentEval, addedGross, addedUpkeep, addedData };
+          });
+      }, [gameState, evaluateDepartment]);
+
+
       if (preBoot) {
         return (
           <div className="w-full h-screen fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center cursor-pointer overflow-hidden" onClick={initiateConnection}>
              <div className="text-emerald-500 font-mono text-sm sm:text-lg animate-pulse tracking-widest text-center px-4 relative z-10 bg-black/60 p-4 rounded-xl border border-emerald-900/50 backdrop-blur-md">
-               {atob("WyBBV0FJVElORyBFTkdJTkUgQk9PVCAtIENMSUNLIFRPIEVTVEFCTElTSCBNQU5BR0VNRU5UIExJTksgXQ==")}
+               [ INITIATE AXIOM ENGINE v1.0 ]
              </div>
              <div className="text-[10px] sm:text-xs text-red-500 font-mono mt-8 opacity-80 text-center px-4 max-w-md relative z-10 bg-black/50 p-2 rounded tracking-wider">
-               WARNING: By clicking, you initialize the local Hegemony Engine loop.
+               WARNING: By clicking, you initialize the local Hegemony loop. Tax liabilities apply.
              </div>
           </div>
         );
       }
 
-      // --- SCOLDING & CRASH SCREENS ---
-      if (scolding) {
-         return (
-           <div className="w-full h-screen fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-8">
-              <div className="max-w-2xl border border-emerald-500 bg-[#0a0f16]/90 p-8 shadow-[0_0_80px_rgba(16,185,129,0.3)] relative overflow-hidden text-center rounded-xl">
-                <i className="fa-solid fa-expand text-6xl text-emerald-500 mb-6 glitch-hover"></i>
-                <h1 className="text-3xl font-black text-white uppercase tracking-widest mb-4">Display Optimization</h1>
-                <p className="text-emerald-400 font-mono text-sm mb-6 leading-relaxed">
-                  For optimal engine performance and immersion, fullscreen mode is highly recommended. Proceed in windowed mode at your own risk of UI clipping.
-                </p>
-                <button onClick={initiateConnection} className="bg-emerald-700 hover:bg-emerald-600 text-white font-bold uppercase tracking-widest py-4 px-8 border border-emerald-400 transition-colors rounded">
-                  [ ENTER FULLSCREEN ]
-                </button>
-              </div>
-           </div>
-         );
-      }
-
-      // --- RENDER GAME ---
       return (
-        <div className={`h-full w-full flex flex-col font-sans selection:bg-emerald-500/30 overflow-hidden relative ${glitchClass}`}>
+        <div className={`h-full w-full flex flex-col font-sans selection:bg-emerald-500/30 overflow-hidden relative ${finances.isBankrupt ? 'bankrupt-pulse' : ''}`}>
           
-          {/* EVASION LOGS */}
-          <div className="absolute top-4 right-4 z-[200] space-y-2 pointer-events-none">
-            {evasionLogs.map((log) => (
-              <div key={log.id} className="bg-[#0a0f16]/90 border border-amber-500 text-amber-400 font-mono text-xs p-3 rounded shadow-[0_0_20px_rgba(245,158,11,0.3)] animate-[fadeIn_0.3s_ease-out]">
-                {log.msg}
+          {/* BANKRUPT BANNER */}
+          {finances.isBankrupt && (
+              <div className="w-full bg-red-900 text-white font-black uppercase tracking-widest text-center py-1 text-xs z-[200] animate-pulse">
+                 CRITICAL ALERT: BANKRUPTCY DECLARED. AUTO-SYSTEMS HALTED. MANUAL EXTRACTION REQUIRED.
               </div>
-            ))}
-          </div>
+          )}
 
           {/* BOOM MODAL */}
           {gameState.marketBoom && (
@@ -917,12 +923,12 @@
                 <h2 className="text-xl lg:text-2xl font-black text-white mb-2 text-center uppercase tracking-widest">System Link Restored</h2>
                 <p className="text-slate-400 text-sm text-center mb-6">Extraction protocols executed automatically for {formatNumber(offlineReport.time / 3600)} hours.</p>
                 <div className="space-y-4 mb-8">
-                  {offlineReport.capital > 0 && (
-                    <div className="bg-[#0a0f16]/80 border border-emerald-900/50 p-4 rounded-xl flex items-center gap-4">
-                      <div className="bg-emerald-950/50 p-3 rounded-lg text-emerald-400"><i className="fa-solid fa-coins text-2xl"></i></div>
+                  {offlineReport.capital !== 0 && (
+                    <div className={`bg-[#0a0f16]/80 border p-4 rounded-xl flex items-center gap-4 ${offlineReport.capital < 0 ? 'border-red-900/50' : 'border-emerald-900/50'}`}>
+                      <div className={`bg-black/50 p-3 rounded-lg ${offlineReport.capital < 0 ? 'text-red-400' : 'text-emerald-400'}`}><i className="fa-solid fa-coins text-2xl"></i></div>
                       <div>
-                        <div className="text-xs text-slate-400 uppercase tracking-widest font-bold">Capital Generated</div>
-                        <div className="text-xl font-mono font-bold text-emerald-400">{formatCurrency(offlineReport.capital, nota)}</div>
+                        <div className="text-xs text-slate-400 uppercase tracking-widest font-bold">Net Capital Delta</div>
+                        <div className={`text-xl font-mono font-bold ${offlineReport.capital < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(offlineReport.capital, nota)}</div>
                       </div>
                     </div>
                   )}
@@ -981,17 +987,13 @@
           <header className="h-auto shrink-0 glass-panel border-b border-emerald-700/50 px-3 py-3 lg:px-6 lg:py-0 lg:h-[80px] flex flex-col lg:flex-row items-center justify-between z-50 relative gap-3 bg-[#0a0f16]/80">
             <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
               <div className="flex items-center gap-3 cursor-pointer">
-                 {/* Hub Integration Feature Added */}
-                 <a href="index.html" className="hidden lg:flex w-10 h-10 bg-black border border-emerald-800 text-emerald-500 hover:bg-emerald-900/50 hover:text-emerald-300 transition-colors items-center justify-center rounded shadow-[0_0_10px_rgba(16,185,129,0.2)]" title="Return to Project Hub">
-                   <i className="fa-solid fa-house"></i>
-                 </a>
                  <div className="w-12 h-12 bg-black border border-emerald-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] rounded">
                    <i className="fa-solid fa-server text-2xl text-emerald-400"></i>
                  </div>
                  <div className="flex flex-col">
                    <span className="font-black text-sm lg:text-xl tracking-widest uppercase leading-none text-white glitch-hover">Axiom Syndicate</span>
                    <div className="flex items-center gap-1 mt-1">
-                     <span className="text-[9px] lg:text-[10px] text-emerald-400 tracking-widest font-mono uppercase font-bold">Infinite Hegemony v0.7.0 BETA</span>
+                     <span className="text-[9px] lg:text-[10px] text-emerald-400 tracking-widest font-mono uppercase font-bold">Infinite Hegemony v1.0</span>
                    </div>
                  </div>
               </div>
@@ -1008,7 +1010,7 @@
                 <div className="flex items-center gap-1.5 text-emerald-400 mb-0.5">
                   <i className="fa-solid fa-coins text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-emerald-300">Capital</span>
                 </div>
-                <div className="text-lg lg:text-2xl font-black text-white font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] leading-none">
+                <div className={`text-lg lg:text-2xl font-black font-mono tracking-tighter leading-none ${finances.isBankrupt ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'text-white drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`}>
                   {formatCurrency(gameState.capital, nota)}
                 </div>
               </div>
@@ -1051,7 +1053,7 @@
           <div className="w-full bg-[#0a0f16]/90 border-b border-emerald-700/50 p-2 flex items-center gap-3 overflow-hidden shrink-0 z-40 backdrop-blur-sm">
              <i className="fa-solid fa-terminal text-emerald-500 text-xs animate-pulse pl-2"></i>
              <div className="text-[10px] text-emerald-400 font-mono whitespace-nowrap overflow-hidden text-ellipsis flex-1">
-                 > {currentLore}
+                 > {LORE_MESSAGES.slice().reverse().find(l => l.req(gameState))?.text || LORE_MESSAGES[0].text}
              </div>
           </div>
 
@@ -1065,26 +1067,17 @@
                   <i className="fa-solid fa-building text-lg lg:text-xl text-emerald-500"></i>
                   <h2 className="text-base lg:text-lg font-black text-white uppercase tracking-widest">Holdings</h2>
                 </div>
-                <p className="text-[9px] lg:text-[10px] text-emerald-400 font-mono mt-1">Acquire physical and digital assets.</p>
+                <p className="text-[9px] lg:text-[10px] text-emerald-400 font-mono mt-1">Acquire assets. Manage upkeep margins.</p>
               </div>
               
               <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3 relative pb-20 lg:pb-3">
-                {Object.entries(gameState.departmentRegistry).map(([key, dep]) => {
-                  const count = gameState.departments[key] || 0;
-                  const currency = gameState.capital;
-                  const drift = gameState.prestigeUpgrades.subsidies || 0;
-                  let amountToBuy = gameState.buyMultiplier === -1 ? calculateMaxAffordable(dep.baseCost, dep.costMult, count, currency, drift) : gameState.buyMultiplier;
-                  const cost = calculateCost(dep.baseCost, dep.costMult, count, Math.max(1, amountToBuy), drift);
-                  const canAfford = currency >= cost && (gameState.buyMultiplier !== -1 || amountToBuy > 0);
+                {uiDeps.map(({ key, dep, count, cost, canAfford, currentEval, addedGross, addedUpkeep, addedData }) => {
                   const isData = dep.type === 'data';
                   const tColor = isData ? 'cyan' : 'emerald';
                   
                   const mBoost = getMilestoneBoost(count), nMilestone = getNextMilestone(count);
                   const pMilestone = MILESTONE_THRESHOLDS[MILESTONE_THRESHOLDS.indexOf(nMilestone) - 1] || 0;
                   const pct = nMilestone ? ((count - pMilestone) / (nMilestone - pMilestone)) * 100 : 100;
-
-                  const totalProd = getTotalProd(dep, count);
-                  const addedProd = getAddedProd(dep, Math.max(1, amountToBuy), count);
 
                   return (
                     <div key={key} className={`bg-[#101820]/70 border ${canAfford ? `border-${tColor}-700/50` : 'border-white/5 opacity-80'} rounded p-3 relative overflow-hidden group flex flex-col`}>
@@ -1098,7 +1091,13 @@
                           </div>
                           <div className="min-w-0">
                             <h3 className="font-bold text-slate-100 text-xs lg:text-sm truncate uppercase tracking-wider">{dep.name}</h3>
-                            <div className="text-[9px] lg:text-[10px] font-mono text-slate-400">Total: {isData ? formatNumber(totalProd, nota) : formatCurrency(totalProd, nota)}/h</div>
+                            <div className="text-[9px] lg:text-[10px] font-mono text-slate-400">
+                               {isData ? (
+                                   <span>Prod: {formatNumber(currentEval.data, nota)}/s</span>
+                               ) : (
+                                   <span>Gross: {formatCurrency(currentEval.gross, nota)}/s | Upk: <span className="text-red-400">-{formatCurrency(currentEval.upkeep, nota)}/s</span></span>
+                               )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-right shrink-0 ml-2">
@@ -1116,11 +1115,9 @@
                         className={`hold-btn w-full py-2 px-3 rounded font-mono font-bold text-xs flex justify-between items-center transition-colors border mt-auto relative z-10
                           ${canAfford ? `bg-${tColor}-900/40 hover:bg-${tColor}-900/60 text-${tColor}-300 border-${tColor}-500/60 shadow-[0_0_15px_rgba(var(--tw-colors-${tColor}-500),0.2)]` : 'bg-black/50 text-slate-500 border-white/5'}`}
                       >
-                        <span className="flex items-center gap-1">
-                           Buy: {formatCurrency(cost, nota)}
-                        </span>
+                        <span className="flex items-center gap-1">Buy: {formatCurrency(cost, nota)}</span>
                         <span className={`text-[9px] opacity-90 ${isData ? 'text-cyan-400' : 'text-emerald-400'}`}>
-                           (+{isData ? formatNumber(addedProd, nota) : formatCurrency(addedProd, nota)}/h)
+                          {isData ? `+${formatNumber(addedData, nota)}/s` : `G: +${formatNumber(addedGross, nota)} | U: -${formatNumber(addedUpkeep, nota)}`}
                         </span>
                       </button>
                     </div>
@@ -1188,8 +1185,8 @@
                 )}
 
                 <div className="relative z-10 w-48 h-48 lg:w-64 lg:h-64 flex items-center justify-center mt-2 lg:mt-0">
-                  <div className="absolute inset-0 border border-emerald-500/30 rounded-full animate-spin-slow pointer-events-none"></div>
-                  <div className="absolute inset-4 border border-emerald-700/60 rounded-full animate-spin-slower-reverse pointer-events-none"></div>
+                  <div className={`absolute inset-0 border rounded-full animate-spin-slow pointer-events-none ${finances.isBankrupt ? 'border-red-500/30' : 'border-emerald-500/30'}`}></div>
+                  <div className={`absolute inset-4 border rounded-full animate-spin-slower-reverse pointer-events-none ${finances.isBankrupt ? 'border-red-700/60' : 'border-emerald-700/60'}`}></div>
                   
                   <button 
                     onPointerDown={startHoldClick}
@@ -1197,35 +1194,35 @@
                     onPointerLeave={endHoldClick}
                     onPointerCancel={endHoldClick}
                     onContextMenu={(e)=>e.preventDefault()}
-                    className={`relative w-40 h-40 lg:w-52 lg:h-52 rounded-full bg-[#030507] border-2 flex items-center justify-center hold-btn transition-all duration-200 shadow-[0_0_60px_rgba(16,185,129,0.15)]
-                      ${gameState.monopolyBuff.active ? 'border-amber-400 shadow-[0_0_100px_rgba(245,158,11,0.3)]' : 'border-emerald-600 hover:border-emerald-400'}`}
+                    className={`relative w-40 h-40 lg:w-52 lg:h-52 rounded-full bg-[#030507] border-2 flex items-center justify-center hold-btn transition-all duration-200 
+                      ${finances.isBankrupt ? 'border-red-600 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : gameState.monopolyBuff.active ? 'border-amber-400 shadow-[0_0_100px_rgba(245,158,11,0.3)]' : 'border-emerald-600 hover:border-emerald-400 shadow-[0_0_60px_rgba(16,185,129,0.15)]'}`}
                   >
-                    <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.15),transparent)]"></div>
-                    <i className={`fa-solid fa-globe text-6xl lg:text-8xl relative z-10 ${gameState.monopolyBuff.active ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.9)]' : 'text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.9)]'}`}></i>
+                    <div className={`absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(${finances.isBankrupt ? '239,68,68' : '16,185,129'},0.15),transparent)]`}></div>
+                    <i className={`fa-solid ${finances.isBankrupt ? 'fa-skull text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.9)]' : gameState.monopolyBuff.active ? 'fa-globe text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.9)]' : 'fa-globe text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.9)]'} text-6xl lg:text-8xl relative z-10`}></i>
                   </button>
                 </div>
                 
-                <p className="mt-6 lg:mt-10 text-[10px] lg:text-xs text-emerald-400 font-mono tracking-widest uppercase flex items-center gap-2 bg-[#05080a] px-4 py-1.5 lg:py-2 rounded border border-emerald-700/50">
-                  <i className="fa-solid fa-fingerprint animate-pulse"></i> Extract Capital
+                <p className={`mt-6 lg:mt-10 text-[10px] lg:text-xs font-mono tracking-widest uppercase flex items-center gap-2 bg-[#05080a] px-4 py-1.5 lg:py-2 rounded border ${finances.isBankrupt ? 'text-red-400 border-red-700/50' : 'text-emerald-400 border-emerald-700/50'}`}>
+                  <i className="fa-solid fa-fingerprint animate-pulse"></i> {finances.isBankrupt ? 'Manual Bailout Extraction' : 'Extract Capital'}
                 </p>
 
                 {/* --- TIME FRAME STATS --- */}
                 <div className="mt-6 lg:mt-8 grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 w-full max-w-[90%] lg:max-w-md mx-auto z-20">
                     <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Minute</span>
-                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 60, nota)}</span>
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Sec</span>
+                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net, nota)}</span>
                     </div>
                     <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Hour</span>
-                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 3600, nota)}</span>
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Min</span>
+                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 60, nota)}</span>
                     </div>
                     <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Day</span>
-                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 86400, nota)}</span>
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Hour</span>
+                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 3600, nota)}</span>
                     </div>
                     <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Per Week</span>
-                      <span className="text-[10px] lg:text-xs text-emerald-400 font-mono font-bold">+{formatCurrency(rates.capital * 604800, nota)}</span>
+                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Day</span>
+                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 86400, nota)}</span>
                     </div>
                 </div>
 
@@ -1236,19 +1233,19 @@
                 ))}
               </div>
 
-              {/* Analytics */}
-              <div className="glass-panel lg:rounded-xl p-3 lg:p-4 shrink-0 grid grid-cols-3 gap-2 lg:gap-4 divide-x divide-emerald-700/50 border-b lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl mb-16 lg:mb-0">
-                <div className="px-2">
-                  <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono uppercase tracking-widest mb-1">Rank Mult</div>
-                  <div className="text-sm lg:text-base font-mono font-bold text-emerald-300">x{formatNumber(multipliers.rankBoost, nota)}</div>
+              {/* Minimal Analytics Bar */}
+              <div className="glass-panel lg:rounded-xl p-3 lg:p-4 shrink-0 flex gap-2 lg:gap-4 divide-x divide-emerald-700/50 border-b lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl mb-16 lg:mb-0 items-center justify-between">
+                <div className="px-2 flex-1 text-center">
+                  <div className="text-[9px] lg:text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-1">Gross Output</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-emerald-300">{formatCurrency(finances.gross, nota)}/s</div>
                 </div>
-                <div className="px-2 lg:px-4">
-                  <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono uppercase tracking-widest mb-1">Extractions</div>
-                  <div className="text-sm lg:text-base font-mono font-bold text-slate-200">{formatNumber(gameState.stats.totalClicks, nota)}</div>
+                <div className="px-2 lg:px-4 flex-1 text-center">
+                  <div className="text-[9px] lg:text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-1">Upkeep</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-red-400">-{formatCurrency(finances.upkeep, nota)}/s</div>
                 </div>
-                <div className="px-2 lg:px-4">
-                  <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono uppercase tracking-widest mb-1">Equity Boost</div>
-                  <div className="text-sm lg:text-base font-mono font-bold text-amber-400">x{formatNumber(multipliers.equityBoost, nota)}</div>
+                <div className="px-2 lg:px-4 flex-1 text-center">
+                  <div className="text-[9px] lg:text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-1">Taxation</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-amber-400">{(finances.taxRate * 100).toFixed(0)}%</div>
                 </div>
               </div>
             </section>
@@ -1259,7 +1256,6 @@
               <div className="flex p-2 gap-1 lg:gap-2 bg-[#101820]/90 border-b border-emerald-700/50 shrink-0">
                 <button onClick={() => setStrategyTab('policies')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider ${strategyTab === 'policies' ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}>Policies</button>
                 <button onClick={() => setStrategyTab('prestige')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider flex items-center justify-center gap-1 ${strategyTab === 'prestige' ? 'bg-amber-900/50 text-amber-300 border border-amber-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}><i className="fa-solid fa-landmark"></i> Prestige</button>
-                {/* NEW FEATURE: Analytics/Stats Tab Added */}
                 <button onClick={() => setStrategyTab('stats')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'stats' ? 'bg-blue-900/50 text-blue-300 border-blue-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="Statistics"><i className="fa-solid fa-chart-bar"></i></button>
                 <button onClick={() => setStrategyTab('settings')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'settings' ? 'bg-slate-700 text-white border-slate-500' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="Settings"><i className="fa-solid fa-cog"></i></button>
                 <button onClick={() => setStrategyTab('about')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'about' ? 'bg-purple-900/50 text-purple-300 border-purple-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="About"><i className="fa-solid fa-user-astronaut"></i></button>
@@ -1270,7 +1266,8 @@
                   <div className="space-y-3">
                     {Object.entries(gameState.policyRegistry).map(([key, upg]) => {
                       const count = gameState.policies[key] || 0;
-                      const cost = calculateCost(upg.baseCost, upg.costMult, count, 1, gameState.prestigeUpgrades.subsidies || 0);
+                      const drift = gameState.prestigeUpgrades.bailouts || 0;
+                      const cost = calculateCost(upg.baseCost, upg.costMult, count, 1, drift);
                       const canAfford = gameState.capital >= cost;
 
                       return (
@@ -1282,7 +1279,7 @@
                           <div className="text-[10px] text-slate-300 mb-2 leading-tight">{upg.desc}</div>
                           <div className="mt-auto flex justify-between items-center gap-2">
                             <div className="text-[9px] text-emerald-400 font-mono bg-black px-1.5 py-0.5 rounded border border-emerald-800/60 truncate">
-                              {upg.effectType.replace('_', ' ')}: +{upg.effectBase}
+                              {upg.effectType.replace('_', ' ')}: +{(upg.effectBase * (upg.effectType.includes('reduction') ? 100 : 1)).toFixed(upg.effectType.includes('reduction') ? 0 : 2)}{upg.effectType.includes('reduction') ? '%' : ''}
                             </div>
                             <button
                               onPointerDown={(e) => canAfford && startHoldBuy('policy', key, e)}
@@ -1334,7 +1331,7 @@
                             <p className="text-[10px] text-slate-300 leading-tight mb-2">{upg.desc}</p>
                             <div className="flex justify-between items-center gap-2">
                               <span className="text-[9px] text-emerald-400 font-mono bg-black px-1.5 py-0.5 rounded border border-emerald-800/60 truncate">
-                                {upg.effectType.replace('_', ' ')}: +{upg.effectBase}
+                                {upg.effectType.replace('_', ' ')}: +{(upg.effectBase * (upg.effectType.includes('reduction') ? 100 : 1)).toFixed(upg.effectType.includes('reduction') ? 0 : 2)}{upg.effectType.includes('reduction') ? '%' : ''}
                               </span>
                               <button
                                 onPointerDown={(e) => canAfford && startHoldBuy('prestige', key, e)}
@@ -1355,11 +1352,43 @@
                   </div>
                 )}
 
-                {/* NEW FEATURE: Stats Integration */}
                 {strategyTab === 'stats' && (
                   <div className="space-y-4 pt-2">
-                    <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1">System Analytics</h3>
+                    <h3 className="text-[10px] lg:text-xs font-bold text-blue-500 font-mono tracking-widest mb-3 border-b border-blue-800/50 pb-1 flex items-center gap-2"><i className="fa-solid fa-file-invoice-dollar"></i> Financial Report</h3>
                     
+                    <div className="bg-[#101820]/80 border border-slate-800/40 rounded p-3 font-mono space-y-2 text-xs">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Gross Income:</span>
+                            <span className="text-emerald-400">{formatCurrency(finances.gross, nota)}/s</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Overhead/Upkeep:</span>
+                            <span className="text-red-400">-{formatCurrency(finances.upkeep, nota)}/s</span>
+                        </div>
+                        <div className="h-px bg-slate-800 my-1"></div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-300">Taxable Profit:</span>
+                            <span className="text-white">{formatCurrency(finances.profit, nota)}/s</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Tax Bracket ({(finances.taxRate * 100).toFixed(0)}%):</span>
+                            <span className="text-amber-400">-{formatCurrency(finances.taxAmount, nota)}/s</span>
+                        </div>
+                        <div className="h-px bg-slate-800 my-1"></div>
+                        <div className="flex justify-between items-center font-bold text-sm">
+                            <span className="text-white">NET MARGIN:</span>
+                            <span className={finances.net < 0 ? 'text-red-500' : 'text-emerald-500'}>{formatCurrency(finances.net, nota)}/s</span>
+                        </div>
+                    </div>
+
+                    <h3 className="text-[10px] lg:text-xs font-bold text-purple-500 font-mono tracking-widest mb-3 border-b border-purple-800/50 pb-1 mt-6 flex items-center gap-2"><i className="fa-solid fa-tachometer-alt"></i> System Stress</h3>
+                    <div className="bg-[#101820]/80 border border-slate-800/40 rounded p-3 font-mono text-xs">
+                        <div className="text-slate-400 mb-1">Time Dilation Level:</div>
+                        <div className="text-purple-400 font-bold mb-2">{getDilationSeverity(applyDilation(1e13))}</div>
+                        <div className="text-[9px] text-slate-500 leading-tight">As capital velocity approaches infinity, Hegemony algorithms artificially dilate time, heavily taxing multiplier exponents to maintain system stability.</div>
+                    </div>
+
+                    <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1 mt-6">General Analytics</h3>
                     <div className="grid grid-cols-2 gap-3 mb-4">
                        <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
                          <i className="fa-solid fa-fingerprint text-emerald-500 mb-1"></i>
@@ -1367,35 +1396,10 @@
                          <span className="text-sm font-bold text-emerald-300 font-mono">{formatNumber(gameState.stats.totalClicks, nota)}</span>
                        </div>
                        <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
-                         <i className="fa-solid fa-chart-line text-amber-500 mb-1"></i>
-                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Market Booms</span>
-                         <span className="text-sm font-bold text-amber-300 font-mono">{formatNumber(gameState.stats.marketBooms, nota)}</span>
-                       </div>
-                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
                          <i className="fa-solid fa-clock text-cyan-500 mb-1"></i>
                          <span className="text-[9px] text-slate-400 uppercase tracking-widest">Time Online</span>
                          <span className="text-sm font-bold text-cyan-300 font-mono">{(gameState.stats.timePlayed / 3600).toFixed(1)}h</span>
                        </div>
-                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
-                         <i className="fa-solid fa-sync text-purple-500 mb-1"></i>
-                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Takeovers</span>
-                         <span className="text-sm font-bold text-purple-300 font-mono">{gameState.buyouts}</span>
-                       </div>
-                    </div>
-
-                    <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 space-y-2">
-                      <div className="flex justify-between items-center text-[10px] lg:text-xs font-mono">
-                        <span className="text-slate-400">Total Run Capital:</span>
-                        <span className="text-emerald-400 font-bold">{formatCurrency(gameState.runCapital, nota)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] lg:text-xs font-mono">
-                        <span className="text-slate-400">Total Lifetime Capital:</span>
-                        <span className="text-emerald-400 font-bold">{formatCurrency(gameState.lifetimeCapital, nota)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] lg:text-xs font-mono">
-                        <span className="text-slate-400">Procedural Tech:</span>
-                        <span className="text-cyan-400 font-bold">{procStats.deps + procStats.pols + procStats.pres} Discovered</span>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -1466,24 +1470,16 @@
                     </div>
                     <div>
                       <h2 className="text-lg font-black text-white tracking-widest uppercase">Developer Info</h2>
-                      <p className="text-[10px] text-emerald-500 font-mono mb-4 uppercase tracking-widest">Axiom Syndicate: v0.7.0 BETA</p>
-                    </div>
-
-                    <div className="w-full bg-black border border-emerald-700/60 rounded p-4 text-left">
-                       <p className="text-xs text-slate-200 leading-relaxed font-mono">
-                         <span className="text-emerald-400 font-bold">> STATUS:</span> {atob('WW91IGFyZSBpbnRlcmFjdGluZyB3aXRoIHRoZSBBeGlvbSBTeW5kaWNhdGUgZW5naW5lLCBhIGhpZ2hseSBzY2FsYWJsZSBjYXBpdGFsaXN0IHNpbXVsYXRvci4=')}<br/><br/>
-                         <span className="text-amber-400 font-bold">> ALERT:</span> {atob('RW5zdXJlIGZyZXF1ZW50IG1hbnVhbCBzYXZlcyB0byBwcmV2ZW50IGJyb3dzZXIgY2FjaGUgbG9zcy4gQ2xvdWQgc3luYyBpcyBjdXJyZW50bHkgZGlzYWJsZWQgZm9yIHRoaXMgbG9jYWxpemVkIGJ1aWxkLg==')}
-                       </p>
+                      <p className="text-[10px] text-emerald-500 font-mono mb-4 uppercase tracking-widest">Axiom Syndicate: v1.0</p>
                     </div>
 
                     <div className="w-full bg-[#101820]/80 border border-emerald-800/50 rounded p-4 text-left space-y-3">
                         <h3 className="text-emerald-500 font-bold text-xs uppercase tracking-widest border-b border-emerald-800/50 pb-1">Changelog History</h3>
                         <div className="text-[10px] text-slate-300 font-mono space-y-2">
-                            <p><span className="text-slate-500">v0.1.0</span> - Initial React logic. Math was broken.</p>
-                            <p><span className="text-slate-500">v0.3.5</span> - Added Data/Equity mechanics after 3 weeks of battling UI state.</p>
-                            <p><span className="text-slate-500">v0.5.0</span> - Learned how to prompt AI to help fix my memory leaks.</p>
-                            <p><span className="text-slate-500">v0.6.2</span> - Added standard notation and dark mode.</p>
-                            <p className="text-emerald-400 font-bold"><span className="text-emerald-600">v0.7.0 BETA</span> - Real-world economy gaps. The game is finally infinite. 6 weeks of tweaking paid off!</p>
+                            <p><span className="text-slate-500">v0.1.0</span> - Initial React logic.</p>
+                            <p><span className="text-slate-500">v0.3.5</span> - Added Data/Equity mechanics.</p>
+                            <p><span className="text-slate-500">v0.7.0</span> - Scalability checks.</p>
+                            <p className="text-emerald-400 font-bold"><span className="text-emerald-600">v1.0.0</span> - REALITY UPDATE. Added Upkeep Margins, Corporate Tax Brackets, Bankruptcy mechanics, and the 10-Year Dilation Engine to permanently halt exponential runaway.</p>
                         </div>
                     </div>
 
@@ -1521,10 +1517,9 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
 
-    // Cleaned standard dev logs.
     console.clear();
-    console.log("%c Axiom Syndicate: Infinite Hegemony v0.7.0 BETA ", "background: #020202; color: #10b981; font-weight: bold; padding: 4px; border-radius: 4px;");
-    console.log("%c [SYS]: React initialized. Variables scaled for indefinite uptime.", "color: #94a3b8; font-family: monospace;");
+    console.log("%c Axiom Syndicate: Infinite Hegemony v1.0 ", "background: #020202; color: #10b981; font-weight: bold; padding: 4px; border-radius: 4px;");
+    console.log("%c [SYS]: Dilation engine active. Proceed with caution.", "color: #94a3b8; font-family: monospace;");
   </script>
 </body>
 </html>
