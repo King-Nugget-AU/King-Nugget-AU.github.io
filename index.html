@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Nug_Hub | King_Nugget_AU</title>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+    :root {
+      --bg-dark: #07110d;
+      --bg-mid: #0f1d17;
+      --term-green: #6ff7bf;
+      --term-bright: #eafff3;
+      --term-soft: #c8e8d9;
+      --term-muted: #8fb8a3;
+      --term-dark-green: #0d6a4f;
+      --panel-bg: rgba(12, 22, 18, 0.88);
+      --panel-border: rgba(111, 247, 191, 0.28);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top, rgba(78, 171, 130, 0.18), transparent 35%),
+        linear-gradient(180deg, #12251d 0%, var(--bg-dark) 68%, #06100c 100%);
+      color: var(--term-bright);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden; 
+      user-select: none;
+    }
+
+    /* Immersive Visual Layers */
+    .scanlines {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%), 
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.025), rgba(0, 255, 170, 0.02), rgba(0, 140, 255, 0.025));
+      background-size: 100% 4px, 3px 100%;
+      z-index: 50; pointer-events: none; opacity: 0.3;
+    }
+
+    .bg-grid {
+      position: fixed; inset: 0;
+      background-image: linear-gradient(to right, rgba(111, 247, 191, 0.05) 1px, transparent 1px), 
+                        linear-gradient(to bottom, rgba(111, 247, 191, 0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: -2;
+    }
+
+    .vignette {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: radial-gradient(circle, rgba(0,0,0,0) 42%, rgba(4,10,8,0.74) 100%);
+      z-index: 40; pointer-events: none;
+    }
+
+    .hub-panel { 
+      background: var(--panel-bg); 
+      border: 1px solid var(--panel-border); 
+      box-shadow: 0 18px 60px rgba(0,0,0,0.42), inset 0 0 24px rgba(111, 247, 191, 0.05);
+      backdrop-filter: blur(12px);
+    }
+
+    .readable-panel {
+      background: rgba(14, 26, 20, 0.84);
+      border: 1px solid rgba(111, 247, 191, 0.18);
+      box-shadow: inset 0 0 22px rgba(111, 247, 191, 0.04);
+    }
+
+    .hero-orb {
+      background:
+        radial-gradient(circle at 35% 35%, rgba(234, 255, 243, 0.8), rgba(111, 247, 191, 0.28) 20%, rgba(11, 26, 20, 0.1) 50%, transparent 70%),
+        radial-gradient(circle at 50% 50%, rgba(111, 247, 191, 0.15), rgba(7, 17, 13, 0.02) 62%);
+      box-shadow:
+        0 0 40px rgba(111, 247, 191, 0.2),
+        inset 0 0 30px rgba(234, 255, 243, 0.18);
+    }
+
+    .metric-tile {
+      background: linear-gradient(180deg, rgba(17, 31, 24, 0.92), rgba(11, 21, 17, 0.86));
+      border: 1px solid rgba(111, 247, 191, 0.18);
+      box-shadow: inset 0 0 20px rgba(111, 247, 191, 0.03);
+    }
+
+    .action-button {
+      min-height: 48px;
+    }
+
+    .play-button {
+      position: relative;
+      overflow: hidden;
+      animation: playPulse 2.6s ease-in-out infinite;
+    }
+
+    .play-button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 0%, rgba(234,255,243,0.14) 45%, transparent 100%);
+      transform: translateX(-130%);
+      transition: transform 0.65s ease;
+    }
+
+    .play-button:hover::after {
+      transform: translateX(130%);
+    }
+
+    @keyframes playPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(111,247,191,0.0), 0 0 18px rgba(111,247,191,0.12); }
+      50% { box-shadow: 0 0 0 rgba(111,247,191,0.0), 0 0 28px rgba(111,247,191,0.24); }
+    }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    
+    /* Navigation Active Styles */
+    .active-tab {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid var(--term-green);
+      color: var(--term-green);
+      text-shadow: 0 0 10px rgba(111,247,191,0.35);
+    }
+
+    .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .text-glow { text-shadow: 0 0 12px rgba(111,247,191,0.4); }
+
+    /* CRT Flicker for Boot Screen */
+    .animate-flicker { animation: flicker 0.15s infinite; }
+    @keyframes flicker {
+      0% { opacity: 0.95; }
+      50% { opacity: 0.85; }
+      100% { opacity: 0.95; }
+    }
+
+    /* Terminal Cursor */
+    .cursor-blink {
+      display: inline-block;
+      width: 10px;
+      height: 1.2em;
+      background-color: var(--term-green);
+      animation: blink 1s step-end infinite;
+      vertical-align: bottom;
+      margin-left: 4px;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Custom Checkbox */
+    .term-checkbox {
+      appearance: none;
+      width: 16px; height: 16px;
+      border: 1px solid var(--term-green);
+      background: transparent;
+      outline: none; cursor: pointer;
+      position: relative;
+    }
+    .term-checkbox:checked::after {
+      content: '✓';
+      position: absolute; top: -3px; left: 2px;
+      color: var(--term-green); font-size: 14px;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .hub-panel {
+        border-radius: 20px;
+      }
+    }
+  </style>
+  <style>
+    .term-checkbox:checked::after {
+      content: '\2713';
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div class="bg-grid"></div>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const GAME_VERSION = '0.7.1b';
+    const GAME_PATH = './0.7.1b.html';
+    const HUB_NAME = 'Nug_Hub';
+    const CREATOR_NAME = 'King_Nugget_AU';
+    const CREATOR_GITHUB = 'https://github.com/King-Nugget-AU/King-Nugget-AU.github.io';
+    const CREATOR_YOUTUBE = 'https://www.youtube.com/@King_Nugget_AU';
+    const RELEASE_ARCHIVE = [
+      {
+        version: '0.7.1b',
+        status: 'Current Live Build',
+        hubPath: './index.html',
+        gamePath: GAME_PATH,
+        notes: 'The featured live build with stronger onboarding, brighter terminal visuals, richer player stats, broader company resources, and a cleaner browser presentation.'
+      },
+      {
+        version: '0.7.1a',
+        status: 'Archived Snapshot',
+        hubPath: './Archive/0.7.1a/index.html',
+        gamePath: './Archive/0.7.1a/v0.7.1a.html',
+        notes: 'An earlier public pacing pass preserved with its own hub so players can revisit that moment in the project exactly as it shipped.'
+      }
+    ];
+
+    // --- IMMERSION LOCK / TERMINAL BOOT COMPONENT ---
+    const TerminalBoot = ({ onComplete, fsPref, setFsPref }) => {
+      // stages: 'prompt', 'click_init', 'booting'
+      const [stage, setStage] = useState(fsPref !== 'none' ? 'click_init' : 'prompt');
+      const [rememberMe, setRememberMe] = useState(false);
+      const [bootLog, setBootLog] = useState([]);
+      
+      const fullBootSequence = [
+        `> INITIALIZING ${HUB_NAME.toUpperCase()}...`,
+        "> VALIDATING BROWSER DELIVERY PATH... OK",
+        `> LINKING FEATURED PROJECT PAYLOAD ${GAME_VERSION}...`,
+        "> CHECKING ARCHIVE INDEX MAP... SYNCHRONIZED",
+        `> LOADING CREATOR PROFILE: ${CREATOR_NAME}...`,
+        "> CALIBRATING HIGH-VISIBILITY CONSOLE LAYER...",
+        "> PREPARING MOBILE-SAFE NAVIGATION GRID...",
+        "> LOADING PROJECT GUIDANCE / ARCHIVE ACCESS...",
+        "> ARMING FULLSCREEN HANDOFF PROTOCOL...",
+        `> CONNECTING CREATOR BROADCAST: @${CREATOR_NAME}... ESTABLISHED`,
+        "> UPLINK SECURE. VISITOR ACCESS GRANTED."
+      ];
+
+      const executeBoot = async (useFullscreen) => {
+        // Handle Fullscreen Request
+        if (useFullscreen && !document.fullscreenElement) {
+          await document.documentElement.requestFullscreen().catch(err => console.warn(err));
+        }
+
+        // Save preference if checkbox was ticked
+        if (stage === 'prompt' && rememberMe) {
+          const pref = useFullscreen ? 'full' : 'window';
+          try { localStorage.setItem('nughub_fs_pref', pref); } catch (e) {}
+          setFsPref(pref);
+        }
+
+        setStage('booting');
+
+        // Typing effect for boot lines
+        for (let i = 0; i < fullBootSequence.length; i++) {
+          await new Promise(res => setTimeout(res, 400 + Math.random() * 500));
+          setBootLog(prev => [...prev, fullBootSequence[i]]);
+        }
+        
+        await new Promise(res => setTimeout(res, 800));
+        onComplete();
+      };
+
+      return (
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end p-8 md:p-16 bg-[radial-gradient(circle_at_top,rgba(111,247,191,0.12),transparent_32%),linear-gradient(180deg,#08120e_0%,#020403_100%)] mono text-[var(--term-green)]">
+          
+          {/* Output Log */}
+          <div className="flex-1 flex flex-col justify-end mb-8 overflow-hidden">
+             {bootLog.map((line, i) => (
+                <div key={i} className="text-sm md:text-lg mb-2 opacity-90 drop-shadow-[0_0_8px_rgba(111,247,191,0.45)]">
+                  {line}
+                </div>
+             ))}
+             {stage === 'booting' && (
+                <div className="text-sm md:text-lg mt-2"><span className="cursor-blink"></span></div>
+             )}
+          </div>
+
+          {/* Interactive Prompts */}
+          {stage === 'prompt' && (
+            <div className="border border-emerald-300/30 bg-emerald-950/60 p-6 md:p-8 rounded-2xl animate-flicker max-w-2xl shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+              <h2 className="text-xl md:text-2xl font-bold mb-6 text-glow">SYSTEM ALERT: HUB ENTRY CONFIGURATION</h2>
+              <p className="mb-6 opacity-90 text-sm md:text-base text-[var(--term-soft)]">Choose how you want to enter Nug_Hub. Fullscreen keeps the terminal mood strongest, while windowed mode is ideal for mobile browsers and quick showcasing.</p>
+              
+              <div className="flex items-center gap-3 mb-8">
+                <input 
+                  type="checkbox" 
+                  id="remember" 
+                  className="term-checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <label htmlFor="remember" className="cursor-pointer text-sm opacity-90 text-[var(--term-soft)] hover:opacity-100 transition-opacity">
+                  SAVE PREFERENCE (Can be changed in dashboard)
+                </label>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button onClick={() => executeBoot(true)} className="flex-1 py-3 border border-emerald-300 text-[var(--term-green)] hover:bg-emerald-300 hover:text-slate-950 font-bold tracking-widest transition-all rounded-xl">
+                  [Y] INITIALIZE FULLSCREEN
+                </button>
+                <button onClick={() => executeBoot(false)} className="flex-1 py-3 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/10 hover:text-cyan-100 font-bold tracking-widest transition-all rounded-xl">
+                  [N] PROCEED IN WINDOW
+                </button>
+              </div>
+            </div>
+          )}
+
+          {stage === 'click_init' && (
+            <div 
+              onClick={() => executeBoot(fsPref === 'full')}
+              className="absolute inset-0 flex items-center justify-center cursor-pointer group"
+            >
+              <div className="text-center animate-flicker">
+                <i className="fa-solid fa-power-off text-5xl mb-6 drop-shadow-[0_0_15px_rgba(16,185,129,0.8)] group-hover:scale-110 transition-transform"></i>
+                <h1 className="text-2xl md:text-4xl font-black uppercase tracking-[0.3em] text-glow mb-4 text-[var(--term-bright)]">
+                  CLICK TO ENTER NUG_HUB
+                </h1>
+                <p className="opacity-75 text-xs tracking-widest text-[var(--term-soft)]">
+                  [{fsPref === 'full' ? 'FULLSCREEN' : 'WINDOWED'} MODE PRE-CONFIGURED]
+                </p>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    };
+
+    // --- LIVE CLOCK COMPONENT ---
+    const SystemClock = () => {
+      const [time, setTime] = useState(new Date());
+      useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(timer);
+      }, []);
+      
+      return (
+        <div className="flex items-center gap-3 text-xs text-emerald-500/80 font-mono bg-black/50 px-4 py-2 rounded border border-emerald-500/20">
+          <i className="fa-regular fa-clock"></i>
+          <span>{time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          <span className="font-bold text-emerald-400">{time.toLocaleTimeString('en-US', { hour12: false })}</span>
+        </div>
+      );
+    };
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      // LocalStorage init safely
+      const getInitialFsPref = () => {
+        try { return localStorage.getItem('nughub_fs_pref') || 'none'; } 
+        catch (e) { return 'none'; }
+      };
+
+      const [isUnlocked, setIsUnlocked] = useState(false);
+      const [fsPref, setFsPref] = useState(getInitialFsPref);
+      const [isFullscreen, setIsFullscreen] = useState(false);
+      const [activeTab, setActiveTab] = useState('dashboard');
+
+      const tabs = [
+        { id: 'dashboard', icon: 'fa-house', label: 'Home' },
+        { id: 'axiom', icon: 'fa-network-wired', label: 'Featured Project' },
+        { id: 'creator', icon: 'fa-user-astronaut', label: 'Creator' },
+        { id: 'archive', icon: 'fa-folder-open', label: 'Project Archive' }
+      ];
+
+      // Fullscreen Event Listener
+      useEffect(() => {
+        const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      }, []);
+
+      const toggleFullscreen = async () => {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen().catch(err => console.warn(err));
+        } else {
+          await document.exitFullscreen().catch(err => console.warn(err));
+        }
+      };
+
+      const toggleFsPreference = () => {
+        const newPref = fsPref === 'full' ? 'window' : 'full';
+        try { localStorage.setItem('nughub_fs_pref', newPref); } catch (e) {}
+        setFsPref(newPref);
+      };
+
+      const launchGame = async (preferFullscreen = fsPref === 'full', target = GAME_PATH, version = GAME_VERSION) => {
+        try {
+          sessionStorage.setItem('axiom_launch_target', target);
+          sessionStorage.setItem('axiom_launch_fullscreen', preferFullscreen ? '1' : '0');
+          sessionStorage.setItem('axiom_launch_version', version);
+        } catch (e) {}
+
+        if (preferFullscreen && !document.fullscreenElement) {
+          try { await document.documentElement.requestFullscreen(); } catch (e) {}
+        }
+
+        window.location.href = target;
+      };
+
+      const openHub = async (preferFullscreen = fsPref === 'full', target = './index.html') => {
+        try {
+          sessionStorage.setItem('axiom_launch_fullscreen', preferFullscreen ? '1' : '0');
+        } catch (e) {}
+
+        if (preferFullscreen && !document.fullscreenElement) {
+          try { await document.documentElement.requestFullscreen(); } catch (e) {}
+        }
+
+        window.location.href = target;
+      };
+
+      // Tab Content Render
+      const renderContent = () => {
+        switch (activeTab) {
+          case 'dashboard': 
+            return (
+              <div className="animate-fade flex flex-col h-full max-w-6xl overflow-y-auto no-scrollbar pb-6">
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.9fr)] gap-5">
+                  <div className="readable-panel rounded-3xl p-6 md:p-8">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-[10px] text-emerald-500 uppercase tracking-widest">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Personal Portfolio Uplink
+                    </div>
+
+                    <h1 className="mt-5 text-4xl md:text-6xl font-black uppercase tracking-tight text-[var(--term-bright)] leading-none text-glow">
+                      {HUB_NAME}
+                    </h1>
+                    <div className="mt-3 text-sm md:text-base text-[var(--term-green)] mono uppercase tracking-[0.2em]">{CREATOR_NAME}</div>
+
+                    <div className="mt-5 space-y-3 text-sm md:text-base text-[var(--term-soft)] mono leading-relaxed max-w-3xl">
+                      <p>
+                        This is the front page for my playable projects, experiments, and long-form interactive work. <strong className="text-[var(--term-bright)]">Axiom Syndicate: Infinite Hegemony</strong> is the featured release here right now.
+                      </p>
+                      <p>
+                        I wanted an idle game that does not burn through its ideas in a weekend. The aim is a slower, deeper company simulation that can keep opening new layers long after most idle games would have ended.
+                      </p>
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                      <div className="metric-tile rounded-2xl p-4">
+                        <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">Featured Project</div>
+                        <div className="mt-2 text-sm font-bold text-[var(--term-bright)]">Infinite Hegemony</div>
+                        <p className="mt-2 text-xs text-[var(--term-soft)] mono leading-relaxed">A long-form company builder with slow pacing, readable margins, and layered growth.</p>
+                      </div>
+                      <div className="metric-tile rounded-2xl p-4">
+                        <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">Why It Exists</div>
+                        <div className="mt-2 text-sm font-bold text-[var(--term-bright)]">Infinite, not disposable</div>
+                        <p className="mt-2 text-xs text-[var(--term-soft)] mono leading-relaxed">Built as a response to shallow idle loops that end just when they should start getting interesting.</p>
+                      </div>
+                      <div className="metric-tile rounded-2xl p-4">
+                        <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">Play Anywhere</div>
+                        <div className="mt-2 text-sm font-bold text-[var(--term-bright)]">PC and mobile ready</div>
+                        <p className="mt-2 text-xs text-[var(--term-soft)] mono leading-relaxed">Made to read well on desktop for showcasing and still feel good on a phone.</p>
+                      </div>
+                      <div className="metric-tile rounded-2xl p-4">
+                        <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">Archive Support</div>
+                        <div className="mt-2 text-sm font-bold text-[var(--term-bright)]">Versions preserved</div>
+                        <p className="mt-2 text-xs text-[var(--term-soft)] mono leading-relaxed">Older builds keep their own hubs so public releases remain playable.</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex flex-col md:flex-row gap-3">
+                      <button onClick={() => launchGame(fsPref === 'full')} className="action-button play-button flex-1 px-8 py-4 bg-emerald-500/18 border border-emerald-300/50 rounded-xl text-[var(--term-bright)] font-bold hover:bg-emerald-300 hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-solid fa-play"></i> Play {GAME_VERSION}
+                      </button>
+                      <button onClick={() => setActiveTab('axiom')} className="action-button flex-1 px-8 py-4 bg-cyan-500/10 border border-cyan-300/30 rounded-xl text-cyan-100 font-bold hover:bg-cyan-300 hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-solid fa-circle-info"></i> Project Brief
+                      </button>
+                      <button onClick={() => setActiveTab('archive')} className="action-button flex-1 px-8 py-4 bg-white/5 border border-white/10 rounded-xl text-[var(--term-bright)] font-bold hover:bg-white hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-solid fa-box-archive"></i> Browse Archive
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="readable-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center">
+                    <div className="hero-orb w-40 h-40 sm:w-44 sm:h-44 rounded-full border border-emerald-300/25 flex items-center justify-center">
+                      <i className="fa-solid fa-globe text-5xl text-[var(--term-bright)] drop-shadow-[0_0_18px_rgba(111,247,191,0.35)]"></i>
+                    </div>
+                    <div className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[var(--term-green)]">Featured Release</div>
+                    <div className="mt-2 text-xl font-black text-[var(--term-bright)] uppercase tracking-wide">Axiom Syndicate</div>
+                    <p className="mt-3 text-xs text-[var(--term-soft)] mono max-w-sm leading-relaxed">
+                      Start with manual extraction, buy your first business, then grow into a sprawling company using operations, policy, directives, prestige, and long-term resource control.
+                    </p>
+                    <div className="mt-4 grid grid-cols-2 gap-2 w-full">
+                      <div className="metric-tile rounded-xl p-3">
+                        <div className="text-[9px] uppercase tracking-widest text-[var(--term-muted)] mono">Economy</div>
+                        <div className="mt-1 text-xs font-bold text-[var(--term-bright)] uppercase">Daily Scale</div>
+                      </div>
+                      <div className="metric-tile rounded-xl p-3">
+                        <div className="text-[9px] uppercase tracking-widest text-[var(--term-muted)] mono">Learning</div>
+                        <div className="mt-1 text-xs font-bold text-[var(--term-bright)] uppercase">Hand-held start</div>
+                      </div>
+                      <div className="metric-tile rounded-xl p-3">
+                        <div className="text-[9px] uppercase tracking-widest text-[var(--term-muted)] mono">Resources</div>
+                        <div className="mt-1 text-xs font-bold text-[var(--term-bright)] uppercase">Beyond money</div>
+                      </div>
+                      <div className="metric-tile rounded-xl p-3">
+                        <div className="text-[9px] uppercase tracking-widest text-[var(--term-muted)] mono">Hosting</div>
+                        <div className="mt-1 text-xs font-bold text-[var(--term-bright)] uppercase">GitHub ready</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="readable-panel rounded-2xl p-5">
+                    <div className="text-[10px] uppercase tracking-widest text-emerald-300 mono">Why Infinite Matters</div>
+                    <p className="mt-3 text-sm text-[var(--term-soft)] mono leading-relaxed">The interesting part of empire-building should happen after the first few upgrades, not before. This project is built to keep opening outward rather than racing to an ending.</p>
+                  </div>
+                  <div className="readable-panel rounded-2xl p-5">
+                    <div className="text-[10px] uppercase tracking-widest text-cyan-300 mono">What Makes It Different</div>
+                    <p className="mt-3 text-sm text-[var(--term-soft)] mono leading-relaxed">Businesses have upkeep, permits, staffing, management, taxes, secondary resources, and long-term stats so the player is making real company decisions instead of watching one number rise.</p>
+                  </div>
+                  <div className="readable-panel rounded-2xl p-5">
+                    <div className="text-[10px] uppercase tracking-widest text-fuchsia-300 mono">Use Case</div>
+                    <p className="mt-3 text-sm text-[var(--term-soft)] mono leading-relaxed">Play it in a browser, show it on a phone, or compare older versions through the archive. The whole hub is meant to be a clean public-facing showcase.</p>
+                  </div>
+                </div>
+              </div>
+            );
+
+          case 'axiom': 
+            return (
+              <div className="animate-fade h-full flex flex-col max-w-6xl mx-auto w-full pt-2 md:pt-6 overflow-y-auto no-scrollbar pb-6">
+                <div className="flex flex-col lg:flex-row lg:items-end gap-5 mb-6 border-b border-emerald-500/20 pb-6">
+                  <div className="flex items-center gap-4">
+                    <i className="fa-solid fa-fingerprint text-5xl md:text-7xl text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"></i>
+                    <div>
+                      <h2 className="text-3xl md:text-5xl font-black text-[var(--term-bright)] uppercase tracking-widest text-glow">Axiom Syndicate</h2>
+                      <p className="text-[var(--term-green)] mono text-sm tracking-widest uppercase">Infinite Hegemony // Featured Build {GAME_VERSION}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] gap-5">
+                  <div className="space-y-5">
+                    <div className="readable-panel p-6 rounded-2xl">
+                      <h3 className="text-emerald-400 font-bold uppercase tracking-widest mb-4 text-sm flex items-center gap-2 border-b border-emerald-500/20 pb-2">
+                        <i className="fa-solid fa-compass"></i> Why This Game Exists
+                      </h3>
+                      <p className="text-[var(--term-soft)] mono text-sm leading-relaxed">
+                        Most idle games accelerate too fast, flatten into repetition, and end just when the fantasy of building something massive should begin. Infinite Hegemony pushes the other way: slower pacing, more readable decisions, and a company that can keep growing for as long as the player wants to stay with it.
+                      </p>
+                    </div>
+
+                    <div className="readable-panel p-6 rounded-2xl">
+                      <h3 className="text-cyan-300 font-bold uppercase tracking-widest mb-4 text-sm flex items-center gap-2 border-b border-cyan-500/20 pb-2">
+                        <i className="fa-solid fa-list-check"></i> First Session Guide
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">1. Start</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Press and hold the extractor to generate your first money by hand.</p>
+                        </div>
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">2. Stabilize</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Buy a small business so income starts arriving every in-game day without clicking.</p>
+                        </div>
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-[var(--term-muted)] mono">3. Expand Carefully</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Use staff, permits, quality, and management to strengthen each holding while protecting daily net.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="readable-panel p-6 rounded-2xl">
+                      <h3 className="text-fuchsia-300 font-bold uppercase tracking-widest mb-4 text-sm flex items-center gap-2 border-b border-fuchsia-500/20 pb-2">
+                        <i className="fa-solid fa-layer-group"></i> Company Resources
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-emerald-300 mono">Capital</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Your operating cash. Use it for holdings, policies, and business-side upgrades.</p>
+                        </div>
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-cyan-300 mono">User Data</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Earned from information businesses. Powers research and intelligence directives.</p>
+                        </div>
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-violet-300 mono">Influence</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Political and media reach. Spend it to reduce tax pressure through lobbying.</p>
+                        </div>
+                        <div className="metric-tile rounded-2xl p-4">
+                          <div className="text-[10px] uppercase tracking-widest text-fuchsia-300 mono">Market Share</div>
+                          <p className="mt-2 text-sm text-[var(--term-soft)] mono leading-relaxed">Economic control. Spend it on expansion when you want a burst of growth.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="readable-panel p-6 rounded-2xl text-center">
+                      <i className="fa-solid fa-satellite-dish text-5xl text-[var(--term-green)]/70 mb-5"></i>
+                      <h4 className="text-[var(--term-bright)] font-bold uppercase tracking-widest mb-2 text-glow">Launch Ready</h4>
+                      <p className="text-xs text-[var(--term-soft)] mono leading-relaxed">The current release focuses on clearer visuals, stronger onboarding, richer player stats, and broader company resources.</p>
+                      <div className="mt-4 text-[10px] uppercase tracking-[0.22em] text-emerald-300 mono">Release Path: `{GAME_PATH}`</div>
+                      <button onClick={() => launchGame(fsPref === 'full')} className="action-button play-button mt-6 w-full py-5 bg-emerald-500/18 border border-emerald-300/50 rounded-xl text-[var(--term-bright)] font-bold hover:bg-emerald-300 hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-solid fa-globe text-xl"></i> Play Featured Build
+                      </button>
+                    </div>
+
+                    <div className="readable-panel p-6 rounded-2xl">
+                      <h3 className="text-emerald-400 font-bold uppercase tracking-widest mb-4 text-sm flex items-center gap-2 border-b border-emerald-500/20 pb-2">
+                        <i className="fa-solid fa-star"></i> What Makes It Unique
+                      </h3>
+                      <div className="space-y-3 text-sm text-[var(--term-soft)] mono leading-relaxed">
+                        <p>The game teaches itself with large visible tips, clearer card explanations, and deeper stats instead of assuming the player already knows idle game language.</p>
+                        <p>Progress is measured in healthier daily operations, not just explosive number spikes. Growth is meant to feel earned.</p>
+                        <p>The archive is part of the experience, so older public builds remain playable instead of disappearing whenever a new version ships.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+
+          case 'creator':
+            return (
+              <div className="animate-fade h-full flex flex-col max-w-5xl mx-auto w-full pt-2 md:pt-6 overflow-y-auto no-scrollbar pb-6">
+                <div className="flex flex-col md:flex-row md:items-center gap-6 mb-6 border-b border-emerald-500/20 pb-6">
+                  <i className="fa-solid fa-user-astronaut text-6xl md:text-7xl text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"></i>
+                  <div>
+                    <h2 className="text-3xl md:text-5xl font-black text-[var(--term-bright)] uppercase tracking-widest text-glow">{CREATOR_NAME}</h2>
+                    <p className="text-[var(--term-green)] mono text-sm tracking-widest uppercase">Personal Projects, Playable Systems, and Slow-Burn Design</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="readable-panel p-6 rounded-2xl">
+                    <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm flex items-center gap-2 border-b border-emerald-500/20 pb-2">
+                      <i className="fa-solid fa-code"></i> What I Make
+                    </h3>
+                    <p className="mt-4 text-[var(--term-soft)] mono text-sm leading-relaxed">
+                      I like building interactive systems that reward attention over time. The focus here is on projects that feel playable, explorable, and a little unusual rather than disposable.
+                    </p>
+                    <p className="mt-3 text-[var(--term-soft)] mono text-sm leading-relaxed">
+                      Axiom Syndicate is the current flagship because it lets me push on pacing, onboarding, UI presentation, and the idea of an idle game that does not run out of ambition.
+                    </p>
+                  </div>
+
+                  <div className="readable-panel p-6 rounded-2xl">
+                    <h3 className="text-cyan-300 font-bold uppercase tracking-widest text-sm flex items-center gap-2 border-b border-cyan-500/20 pb-2">
+                      <i className="fa-solid fa-wave-square"></i> Broader Interests
+                    </h3>
+                    <p className="mt-4 text-[var(--term-soft)] mono text-sm leading-relaxed">
+                      Alongside code and web presentation, I am interested in atmosphere, presentation, and immersive audio. That same interest in feel and pacing carries through to how I shape project pages and playable builds.
+                    </p>
+                  </div>
+
+                  <div className="md:col-span-2 readable-panel p-6 rounded-2xl">
+                    <h3 className="text-fuchsia-300 font-bold uppercase tracking-widest text-sm flex items-center gap-2 border-b border-fuchsia-500/20 pb-2">
+                      <i className="fa-solid fa-link"></i> Creator Links
+                    </h3>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <a href={CREATOR_GITHUB} target="_blank" rel="noopener noreferrer" className="action-button px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-[var(--term-bright)] font-bold hover:bg-white hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-brands fa-github"></i> GitHub Repo
+                      </a>
+                      <a href={CREATOR_YOUTUBE} target="_blank" rel="noopener noreferrer" className="action-button px-5 py-4 rounded-xl bg-red-500/10 border border-red-300/20 text-red-100 font-bold hover:bg-red-300 hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-brands fa-youtube"></i> YouTube
+                      </a>
+                      <button onClick={() => setActiveTab('axiom')} className="action-button px-5 py-4 rounded-xl bg-emerald-500/18 border border-emerald-300/40 text-[var(--term-bright)] font-bold hover:bg-emerald-300 hover:text-slate-950 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                        <i className="fa-solid fa-gamepad"></i> Featured Project
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+
+          case 'archive':
+            return (
+              <div className="animate-fade h-full flex flex-col max-w-5xl mx-auto w-full pt-2 md:pt-6 overflow-y-auto no-scrollbar pb-6">
+                <div className="flex items-center gap-4 mb-8 border-b border-emerald-500/20 pb-6 shrink-0">
+                  <i className="fa-solid fa-folder-tree text-5xl text-[var(--term-green)]/70"></i>
+                  <div>
+                    <h2 className="text-2xl md:text-4xl font-black text-[var(--term-bright)] uppercase tracking-widest text-glow">Project Archive</h2>
+                    <p className="text-[var(--term-soft)] mono text-xs md:text-sm uppercase tracking-widest">Each release can keep its own hub, look, and launch path.</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 pb-10">
+                  {RELEASE_ARCHIVE.map((release) => (
+                    <div key={release.version} className="readable-panel rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span className="text-lg font-black text-[var(--term-bright)] mono">{release.version}</span>
+                          <span className="text-[10px] uppercase tracking-[0.22em] px-2 py-1 rounded border border-emerald-300/30 text-[var(--term-green)]">{release.status}</span>
+                        </div>
+                        <p className="text-sm text-[var(--term-soft)] mono leading-relaxed max-w-2xl">{release.notes}</p>
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--term-muted)] mono">Hub: {release.hubPath}</div>
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--term-muted)] mono">Game: {release.gamePath}</div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                        <button onClick={() => openHub(fsPref === 'full', release.hubPath)} className="action-button px-6 py-3 rounded-xl bg-cyan-500/10 border border-cyan-300/30 text-cyan-100 font-bold uppercase tracking-widest text-xs hover:bg-cyan-300 hover:text-slate-950 transition-colors">
+                          Open Time-Capsule Hub
+                        </button>
+                        <button onClick={() => launchGame(fsPref === 'full', release.gamePath, release.version)} className="action-button play-button px-6 py-3 rounded-xl bg-emerald-500/18 border border-emerald-300/40 text-[var(--term-bright)] font-bold uppercase tracking-widest text-xs hover:bg-emerald-300 hover:text-slate-950 transition-colors">
+                          Play Direct
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="readable-panel rounded-2xl p-5">
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-cyan-300 mono mb-3">Why The Archive Exists</div>
+                    <p className="text-sm text-[var(--term-soft)] mono leading-relaxed">
+                      Infinite Hegemony is meant to evolve over a long time. Instead of overwriting that history, each public build can remain playable so people can revisit earlier pacing, presentation, and ideas whenever they want.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+
+          default: 
+            return null;
+        }
+      };
+
+      if (!isUnlocked) {
+        return <TerminalBoot onComplete={() => setIsUnlocked(true)} fsPref={fsPref} setFsPref={setFsPref} />;
+      }
+
+      return (
+        <div className="flex flex-col h-screen p-4 lg:p-6 max-w-[1600px] mx-auto relative z-10 animate-fade">
+          
+          {/* HEADER LAYER */}
+          <header className="mb-6 px-2 flex justify-between items-center shrink-0">
+             <div className="flex items-center gap-4">
+               <div className="font-black tracking-[0.24em] uppercase text-xl text-[var(--term-bright)] text-glow">
+                  NUG<span className="text-[var(--term-green)]">_</span>HUB
+               </div>
+             </div>
+             
+             {/* Sub-Header Widgets */}
+             <div className="flex items-center gap-4">
+                <SystemClock />
+                <button 
+                  onClick={toggleFullscreen}
+                  className="w-10 h-10 rounded bg-black/50 border border-emerald-300/20 text-[var(--term-green)] hover:bg-emerald-300 hover:text-slate-950 transition-colors flex items-center justify-center">
+                  <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`}></i>
+                </button>
+             </div>
+          </header>
+
+          {/* MAIN LAYOUT */}
+          <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+            
+            {/* SIDEBAR NAVIGATION */}
+            <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-2">
+              <nav className="flex flex-row lg:flex-col gap-2 overflow-x-auto no-scrollbar pb-2 lg:pb-0">
+                {tabs.map(tab => (
+                  <button 
+                    key={tab.id} 
+                    onClick={() => setActiveTab(tab.id)} 
+                    className={`flex items-center gap-4 px-5 py-4 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all shrink-0 ${activeTab === tab.id ? 'active-tab' : 'text-[var(--term-muted)] hover:text-[var(--term-bright)] hover:bg-white/5 border-l-4 border-transparent'}`}>
+                    <i className={`fa-solid ${tab.icon} w-4 text-center`}></i> {tab.label}
+                  </button>
+                ))}
+              </nav>
+              
+              <div className="mt-auto hidden lg:block space-y-4">
+                
+                {/* Auto Fullscreen Toggle */}
+                <div className="p-3 border border-white/5 rounded-xl bg-black/40 flex items-center justify-between group cursor-pointer hover:border-emerald-500/30 transition-colors" onClick={toggleFsPreference}>
+                   <div className="flex flex-col">
+                     <span className="text-[9px] mono text-slate-500 uppercase tracking-widest mb-1">Boot Override</span>
+                     <span className="text-xs font-bold text-[var(--term-bright)]">Auto-Fullscreen</span>
+                   </div>
+                   <div className={`w-8 h-4 rounded-full relative transition-colors ${fsPref === 'full' ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                      <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${fsPref === 'full' ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                   </div>
+                </div>
+
+                {/* Network Status */}
+                <div className="p-4 border border-white/5 rounded-xl bg-black/40 text-center">
+                  <div className="text-[9px] mono text-slate-500 uppercase tracking-widest mb-2">Network Uplink</div>
+                  <div className="flex items-center justify-center gap-2 text-emerald-500 text-xs font-bold">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    STABLE
+                  </div>
+                </div>
+
+                <div className="p-4 border border-white/5 rounded-xl bg-black/40">
+                  <div className="text-[9px] mono text-slate-500 uppercase tracking-widest mb-2">Creator</div>
+                  <div className="text-sm font-bold text-[var(--term-bright)]">{CREATOR_NAME}</div>
+                  <div className="mt-2 text-xs text-[var(--term-soft)] mono leading-relaxed">Featured project on this page: Axiom Syndicate: Infinite Hegemony.</div>
+                </div>
+              </div>
+            </aside>
+
+            {/* CONTENT AREA */}
+            <main className="flex-1 hub-panel rounded-2xl p-6 lg:p-12 relative flex flex-col h-full overflow-hidden">
+              {renderContent()}
+            </main>
+          </div>
+
+          {/* PROFESSIONAL FOOTER */}
+          <footer className="mt-6 border-t border-white/5 pt-4 flex flex-col md:flex-row justify-between items-center px-4 text-[10px] mono text-[var(--term-muted)] uppercase tracking-widest shrink-0 gap-4">
+            <div className="flex items-center gap-3 text-emerald-200/60">
+               <i className="fa-brands fa-github text-sm"></i>
+               <span>{CREATOR_NAME} // {HUB_NAME}</span>
+            </div>
+            <div className="flex gap-6">
+                <span>Est. 2026</span>
+                <span className="hidden md:inline">|</span>
+                <span>{GAME_VERSION} Live</span>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
