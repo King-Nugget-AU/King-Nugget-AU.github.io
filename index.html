@@ -83,6 +83,33 @@
       50% { opacity: 0.85; }
       100% { opacity: 0.95; }
     }
+
+    /* Terminal Cursor */
+    .cursor-blink {
+      display: inline-block;
+      width: 10px;
+      height: 1.2em;
+      background-color: var(--term-green);
+      animation: blink 1s step-end infinite;
+      vertical-align: bottom;
+      margin-left: 4px;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Custom Checkbox */
+    .term-checkbox {
+      appearance: none;
+      width: 16px; height: 16px;
+      border: 1px solid var(--term-green);
+      background: transparent;
+      outline: none; cursor: pointer;
+      position: relative;
+    }
+    .term-checkbox:checked::after {
+      content: '✓';
+      position: absolute; top: -3px; left: 2px;
+      color: var(--term-green); font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -93,24 +120,113 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
-    // --- IMMERSION LOCK COMPONENT ---
-    const ImmersionLock = ({ onUnlock }) => {
+    // --- IMMERSION LOCK / TERMINAL BOOT COMPONENT ---
+    const TerminalBoot = ({ onComplete, fsPref, setFsPref }) => {
+      // stages: 'prompt', 'click_init', 'booting'
+      const [stage, setStage] = useState(fsPref !== 'none' ? 'click_init' : 'prompt');
+      const [rememberMe, setRememberMe] = useState(false);
+      const [bootLog, setBootLog] = useState([]);
+      
+      const fullBootSequence = [
+        "> INITIALIZING NUG_HUB KERNEL...",
+        "> MEMORY CHECK: OK (1024TB MULTIVERSAL RAM)",
+        "> MOUNTING AXIOM SYNDICATE SIMULATION CORE...",
+        "> FETCHING LATEST BUILD: v0.8.0 BETA",
+        "> CONNECTING BROADCAST LINK: @King_Nugget_AU... ESTABLISHED",
+        "> SYNCHRONIZING SYSTEMIC PROGRESS ARCHIVES...",
+        "> UPLINK SECURE.",
+        "> ACCESS GRANTED."
+      ];
+
+      const executeBoot = async (useFullscreen) => {
+        // Handle Fullscreen Request
+        if (useFullscreen && !document.fullscreenElement) {
+          await document.documentElement.requestFullscreen().catch(err => console.warn(err));
+        }
+
+        // Save preference if checkbox was ticked
+        if (stage === 'prompt' && rememberMe) {
+          const pref = useFullscreen ? 'full' : 'window';
+          try { localStorage.setItem('nughub_fs_pref', pref); } catch (e) {}
+          setFsPref(pref);
+        }
+
+        setStage('booting');
+
+        // Typing effect for boot lines
+        for (let i = 0; i < fullBootSequence.length; i++) {
+          await new Promise(res => setTimeout(res, 400 + Math.random() * 500));
+          setBootLog(prev => [...prev, fullBootSequence[i]]);
+        }
+        
+        await new Promise(res => setTimeout(res, 800));
+        onComplete();
+      };
+
       return (
-        <div 
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black cursor-pointer group"
-          onClick={onUnlock}
-        >
-          <div className="text-center animate-flicker">
-            <i className="fa-solid fa-terminal text-6xl text-emerald-500 mb-6 drop-shadow-[0_0_15px_rgba(16,185,129,0.8)] group-hover:scale-110 transition-transform duration-300"></i>
-            <h1 className="text-2xl md:text-4xl font-black text-emerald-500 uppercase tracking-[0.3em] text-glow">
-              Initialize Nug_Hub
-            </h1>
-            <p className="mt-4 text-emerald-500/70 font-mono text-sm tracking-widest animate-pulse">
-              [ CLICK ANYWHERE TO ESTABLISH UPLINK ]
-            </p>
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end p-8 md:p-16 bg-black font-mono text-emerald-500">
+          
+          {/* Output Log */}
+          <div className="flex-1 flex flex-col justify-end mb-8 overflow-hidden">
+             {bootLog.map((line, i) => (
+                <div key={i} className="text-sm md:text-lg mb-2 opacity-90 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]">
+                  {line}
+                </div>
+             ))}
+             {stage === 'booting' && (
+                <div className="text-sm md:text-lg mt-2"><span className="cursor-blink"></span></div>
+             )}
           </div>
+
+          {/* Interactive Prompts */}
+          {stage === 'prompt' && (
+            <div className="border border-emerald-500/30 bg-emerald-900/10 p-6 md:p-8 rounded animate-flicker max-w-2xl">
+              <h2 className="text-xl md:text-2xl font-bold mb-6 text-glow">SYSTEM ALERT: UPLINK CONFIGURATION</h2>
+              <p className="mb-6 opacity-80 text-sm md:text-base">Optimal simulation immersion requires full sensory focus. Do you wish to initialize the terminal in FULLSCREEN mode?</p>
+              
+              <div className="flex items-center gap-3 mb-8">
+                <input 
+                  type="checkbox" 
+                  id="remember" 
+                  className="term-checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <label htmlFor="remember" className="cursor-pointer text-sm opacity-80 hover:opacity-100 transition-opacity">
+                  SAVE PREFERENCE (Can be changed in dashboard)
+                </label>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button onClick={() => executeBoot(true)} className="flex-1 py-3 border border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-black font-bold tracking-widest transition-all">
+                  [Y] INITIALIZE FULLSCREEN
+                </button>
+                <button onClick={() => executeBoot(false)} className="flex-1 py-3 border border-emerald-500/30 text-emerald-500/70 hover:bg-emerald-500/20 hover:text-emerald-400 font-bold tracking-widest transition-all">
+                  [N] PROCEED IN WINDOW
+                </button>
+              </div>
+            </div>
+          )}
+
+          {stage === 'click_init' && (
+            <div 
+              onClick={() => executeBoot(fsPref === 'full')}
+              className="absolute inset-0 flex items-center justify-center cursor-pointer group"
+            >
+              <div className="text-center animate-flicker">
+                <i className="fa-solid fa-power-off text-5xl mb-6 drop-shadow-[0_0_15px_rgba(16,185,129,0.8)] group-hover:scale-110 transition-transform"></i>
+                <h1 className="text-2xl md:text-4xl font-black uppercase tracking-[0.3em] text-glow mb-4">
+                  CLICK TO INITIALIZE
+                </h1>
+                <p className="opacity-50 text-xs tracking-widest">
+                  [{fsPref === 'full' ? 'FULLSCREEN' : 'WINDOWED'} MODE PRE-CONFIGURED]
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
       );
     };
@@ -134,7 +250,14 @@
 
     // --- MAIN APP COMPONENT ---
     function App() {
+      // LocalStorage init safely
+      const getInitialFsPref = () => {
+        try { return localStorage.getItem('nughub_fs_pref') || 'none'; } 
+        catch (e) { return 'none'; }
+      };
+
       const [isUnlocked, setIsUnlocked] = useState(false);
+      const [fsPref, setFsPref] = useState(getInitialFsPref);
       const [isFullscreen, setIsFullscreen] = useState(false);
       const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -145,11 +268,9 @@
         { id: 'archive', icon: 'fa-folder-open', label: 'Project Archive' }
       ];
 
-      // Fullscreen Logic
+      // Fullscreen Event Listener
       useEffect(() => {
-        const handleFullscreenChange = () => {
-          setIsFullscreen(!!document.fullscreenElement);
-        };
+        const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
       }, []);
@@ -162,11 +283,10 @@
         }
       };
 
-      const handleUnlock = async () => {
-        setIsUnlocked(true);
-        if (!document.fullscreenElement) {
-            await document.documentElement.requestFullscreen().catch(err => console.warn(err));
-        }
+      const toggleFsPreference = () => {
+        const newPref = fsPref === 'full' ? 'window' : 'full';
+        try { localStorage.setItem('nughub_fs_pref', newPref); } catch (e) {}
+        setFsPref(newPref);
       };
 
       // Tab Content Render
@@ -174,37 +294,52 @@
         switch (activeTab) {
           case 'dashboard': 
             return (
-              <div className="animate-fade flex flex-col justify-center h-full max-w-4xl">
-                <div className="mb-6 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-[10px] text-emerald-500 uppercase tracking-widest">
+              <div className="animate-fade flex flex-col justify-center h-full max-w-4xl overflow-y-auto no-scrollbar pb-10">
+                <div className="mb-6 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-[10px] text-emerald-500 uppercase tracking-widest self-start">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Connection Secure
                 </div>
                 
-                <h1 className="text-5xl lg:text-7xl font-black uppercase tracking-tight text-white mb-6 leading-none text-glow">
+                <h1 className="text-5xl lg:text-7xl font-black uppercase tracking-tight text-white mb-6 leading-none text-glow shrink-0">
                   Welcome to <br/><span className="text-emerald-500">Nug_Hub</span>
                 </h1>
                 
-                <div className="space-y-6 text-sm md:text-base text-slate-400 font-mono leading-relaxed max-w-2xl">
+                <div className="space-y-6 text-sm md:text-base text-slate-400 font-mono leading-relaxed max-w-2xl shrink-0">
                   <p>
                     This centralized terminal serves as the core repository for ongoing interactive developments, continuous simulations, multimedia broadcasting, and long-term codebase archiving.
                   </p>
                   <p>
-                    The current primary focus is the scaling and infrastructure development of the <strong>Axiom Syndicate</strong> engine. Navigate to the dedicated sector to review objective parameters and establish a direct simulation uplink.
+                    The current primary focus is the scaling and infrastructure development of the <strong>Axiom Syndicate</strong> engine.
                   </p>
                 </div>
 
-                <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg text-center shadow-[inset_0_0_15px_rgba(0,0,0,0.5)]">
+                {/* Main Call to Action for Game */}
+                <div className="mt-8 bg-black/60 border border-emerald-500/40 p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] shrink-0">
+                  <div className="text-center md:text-left">
+                    <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-lg mb-1 flex items-center justify-center md:justify-start gap-2">
+                       Axiom Syndicate <span className="text-xs bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/50">v0.8.0</span>
+                    </h3>
+                    <p className="text-slate-400 font-mono text-xs md:text-sm mt-2 max-w-md">
+                      Highly recommended: Review the comprehensive Operation Briefing in the <button onClick={() => setActiveTab('axiom')} className="text-emerald-500 underline hover:text-emerald-300">Axiom Syndicate tab</button> to understand the systemic progression mechanics before initializing the simulation.
+                    </p>
+                  </div>
+                  <a href="game.html" className="shrink-0 w-full md:w-auto px-8 py-4 bg-emerald-600/20 border border-emerald-500 rounded text-emerald-400 font-bold hover:bg-emerald-500 hover:text-black transition-all uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] flex items-center justify-center gap-3 group">
+                    <i className="fa-solid fa-globe group-hover:animate-pulse text-lg"></i> Click to Play
+                  </a>
+                </div>
+
+                <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
+                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg text-center shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] hover:border-emerald-500/30 transition-colors">
                     <i className="fa-solid fa-code-commit text-emerald-500 mb-2 text-xl"></i>
                     <div className="text-[10px] text-slate-500 uppercase tracking-widest">Status</div>
                     <div className="text-white font-bold text-xs uppercase">Active Dev</div>
                   </div>
-                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg text-center shadow-[inset_0_0_15px_rgba(0,0,0,0.5)]">
+                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg text-center shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] hover:border-emerald-500/30 transition-colors">
                     <i className="fa-solid fa-microchip text-emerald-500 mb-2 text-xl"></i>
                     <div className="text-[10px] text-slate-500 uppercase tracking-widest">Framework</div>
                     <div className="text-white font-bold text-xs uppercase">React 18 + TW</div>
                   </div>
-                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg text-center shadow-[inset_0_0_15px_rgba(0,0,0,0.5)]">
+                  <div className="bg-black/50 border border-white/5 p-4 rounded-lg text-center shadow-[inset_0_0_15px_rgba(0,0,0,0.5)] hover:border-emerald-500/30 transition-colors">
                     <i className="fa-solid fa-headphones text-emerald-500 mb-2 text-xl"></i>
                     <div className="text-[10px] text-slate-500 uppercase tracking-widest">Audio</div>
                     <div className="text-white font-bold text-xs uppercase">Pipeline</div>
@@ -220,7 +355,7 @@
                     <i className="fa-solid fa-fingerprint text-6xl md:text-8xl text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"></i>
                     <div>
                         <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-widest text-glow mb-2">Axiom Syndicate</h2>
-                        <p className="text-emerald-500 font-mono text-sm tracking-widest uppercase">Infinite Hegemony :: v0.7.0 BETA</p>
+                        <p className="text-emerald-500 font-mono text-sm tracking-widest uppercase">Infinite Hegemony :: v0.8.0 BETA</p>
                     </div>
                 </div>
                 
@@ -228,21 +363,29 @@
                     {/* Lore & Objective */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-black/60 border border-emerald-500/20 p-6 rounded-xl">
-                            <h3 className="text-emerald-400 font-bold uppercase tracking-widest mb-3 text-sm flex items-center gap-2">
-                                <i className="fa-solid fa-book-journal-whills"></i> Operation Briefing
+                            <h3 className="text-emerald-400 font-bold uppercase tracking-widest mb-4 text-sm flex items-center gap-2 border-b border-emerald-500/20 pb-2">
+                                <i className="fa-solid fa-book-journal-whills"></i> Operation Briefing & Instructions
                             </h3>
                             <p className="text-slate-300 font-mono text-sm leading-relaxed mb-4">
-                                You are a low-level operative thrust into a dystopian corporate ladder. Your objective is absolute market domination. Start from a humble street-side operation and relentlessly expand your influence, harvest user data, and manipulate global markets to build a Multiversal Monopoly.
+                                You are a low-level operative thrust into a dystopian corporate ladder. Your objective is absolute market domination. Start from a humble street-side operation and relentlessly expand your influence to build a Multiversal Monopoly.
                             </p>
-                            <p className="text-slate-300 font-mono text-sm leading-relaxed">
-                                <strong>Warning:</strong> This simulation represents a massive scale incremental system. It is designed to be a marathon, not a sprint. Reaching the highest corporate echelons will require significant time, strategy, and strategic prestige buyouts.
-                            </p>
+                            
+                            <ul className="list-disc pl-5 text-slate-300 font-mono text-sm space-y-3 mb-6">
+                                <li><strong className="text-emerald-500">Manual Operations:</strong> Tap the central globe interface rapidly to harvest initial user data and seed capital.</li>
+                                <li><strong className="text-emerald-500">Automated Infrastructure:</strong> Use capital to acquire servers, subroutines, and corporate shells. These assets generate continuous passive yields, scaling your income automatically.</li>
+                                <li><strong className="text-emerald-500">Market Manipulation:</strong> Reinvest heavily into structural upgrades. Upgrades multiply your systemic reach and unlock new tiers of automation.</li>
+                                <li><strong className="text-emerald-500">Multiversal Paradigm (Prestige):</strong> Reaching the highest echelons requires a systemic reset. Execute prestige buyouts to reset local progress in exchange for permanent, game-changing multiversal multipliers. This simulation is a marathon.</li>
+                            </ul>
+
+                            <div className="bg-red-900/10 border border-red-500/30 p-3 rounded text-red-400 font-mono text-xs">
+                                <strong>WARNING:</strong> This incremental system is designed for long-term progression. Reaching absolute systemic dominance will require significant time and strategic resource allocation.
+                            </div>
                         </div>
 
                         <div className="bg-emerald-900/10 border border-emerald-500/30 p-6 rounded-xl flex items-center justify-between shadow-[inset_0_0_30px_rgba(16,185,129,0.05)]">
                             <div>
                                 <h3 className="text-white font-bold uppercase tracking-widest mb-1 text-sm">Local Progress Archiving</h3>
-                                <p className="text-slate-400 font-mono text-xs max-w-sm">All capital and corporate holdings are saved locally to your device. You may disconnect and return without loss of systemic dominance.</p>
+                                <p className="text-slate-400 font-mono text-xs max-w-sm">All capital and corporate holdings are securely saved locally to your device. You may disconnect and return without loss of systemic dominance.</p>
                             </div>
                             <i className="fa-solid fa-hard-drive text-3xl text-emerald-500 opacity-50 ml-4 hidden sm:block"></i>
                         </div>
@@ -250,14 +393,18 @@
 
                     {/* Launch Panel */}
                     <div className="flex flex-col gap-4">
-                        <div className="bg-black/80 border border-white/10 p-6 rounded-xl flex-1 flex flex-col justify-center items-center text-center">
-                            <i className="fa-solid fa-satellite-dish text-4xl text-slate-500 mb-4"></i>
-                            <h4 className="text-white font-bold uppercase tracking-widest mb-2">Uplink Ready</h4>
-                            <p className="text-xs text-slate-500 font-mono mb-8">Simulation payload compiled and awaiting execution.</p>
+                        <div className="bg-black/80 border border-emerald-500/30 p-6 rounded-xl flex-1 flex flex-col justify-center items-center text-center shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] relative overflow-hidden group">
                             
-                            {/* THE LINK TO YOUR GAME */}
-                            <a href="game.html" className="w-full py-4 bg-emerald-600/20 border border-emerald-500 rounded text-emerald-400 font-bold hover:bg-emerald-500 hover:text-black transition-all uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] flex items-center justify-center gap-3">
-                                <i className="fa-solid fa-play"></i> Initialize Uplink
+                            {/* Decorative scanline specific to this box */}
+                            <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:100%_4px] opacity-20 pointer-events-none"></div>
+
+                            <i className="fa-solid fa-satellite-dish text-5xl text-emerald-500/50 mb-6 group-hover:text-emerald-400 transition-colors duration-500"></i>
+                            <h4 className="text-white font-bold uppercase tracking-widest mb-2 z-10 text-glow">Uplink Ready</h4>
+                            <p className="text-xs text-slate-400 font-mono mb-8 z-10 px-4">Simulation payload compiled. Press the globe interface below to establish connection.</p>
+                            
+                            {/* Launch Button */}
+                            <a href="game.html" className="z-10 w-full py-5 bg-emerald-600/20 border border-emerald-500 rounded text-emerald-400 font-bold hover:bg-emerald-500 hover:text-black transition-all uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] flex items-center justify-center gap-3">
+                                <i className="fa-solid fa-globe text-xl group-hover:animate-spin"></i> Initialize
                             </a>
                         </div>
                     </div>
@@ -339,7 +486,7 @@
       };
 
       if (!isUnlocked) {
-        return <ImmersionLock onUnlock={handleUnlock} />;
+        return <TerminalBoot onComplete={() => setIsUnlocked(true)} fsPref={fsPref} setFsPref={setFsPref} />;
       }
 
       return (
@@ -380,11 +527,26 @@
                 ))}
               </nav>
               
-              <div className="mt-auto hidden lg:block p-4 border border-white/5 rounded-xl bg-black/40 text-center">
-                <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-2">Network Uplink</div>
-                <div className="flex items-center justify-center gap-2 text-emerald-500 text-xs font-bold">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                  STABLE
+              <div className="mt-auto hidden lg:block space-y-4">
+                
+                {/* Auto Fullscreen Toggle */}
+                <div className="p-3 border border-white/5 rounded-xl bg-black/40 flex items-center justify-between group cursor-pointer hover:border-emerald-500/30 transition-colors" onClick={toggleFsPreference}>
+                   <div className="flex flex-col">
+                     <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Boot Override</span>
+                     <span className="text-xs font-bold text-slate-300">Auto-Fullscreen</span>
+                   </div>
+                   <div className={`w-8 h-4 rounded-full relative transition-colors ${fsPref === 'full' ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                      <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${fsPref === 'full' ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                   </div>
+                </div>
+
+                {/* Network Status */}
+                <div className="p-4 border border-white/5 rounded-xl bg-black/40 text-center">
+                  <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-2">Network Uplink</div>
+                  <div className="flex items-center justify-center gap-2 text-emerald-500 text-xs font-bold">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    STABLE
+                  </div>
                 </div>
               </div>
             </aside>
