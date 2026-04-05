@@ -1953,7 +1953,7 @@
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <div className="glass-panel border border-emerald-700/30 rounded-xl px-4 py-3 bg-[#0c1218]/90">
                 <div className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-black">Current Pace</div>
-                <div className={`mt-1 text-lg font-black font-mono ${finances.net < 0 ? 'text-red-400' : 'text-white'}`}>{formatCurrency(finances.net, nota)}/day</div>
+                <div className={`mt-1 text-lg font-black font-mono ${finances.net < 0 ? 'text-red-400' : 'text-white'}`}>{formatCurrency(finances.net / 1440, nota)}/min</div>
                 <div className="text-[10px] text-slate-400 mt-1">Steady growth comes from protecting daily net, not chasing flashy spikes.</div>
               </div>
               <div className="glass-panel border border-cyan-700/30 rounded-xl px-4 py-3 bg-[#0c1218]/90">
@@ -1988,7 +1988,7 @@
                     <div className="mt-1 text-sm lg:text-base font-black text-white uppercase tracking-wide">Press the extractor, save for your first business, then protect your daily net.</div>
                     <div className="mt-2 text-[11px] text-slate-300 leading-relaxed max-w-3xl">If you are new to idle games, focus on only three things at first: manual extraction gets your starter money, businesses create automatic daily income, and the most important number on the screen is your net per day after costs and tax.</div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 min-w-0 lg:min-w-[420px]">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 min-w-0 lg:minw-[420px]">
                     <div className="rounded-lg border border-emerald-700/30 bg-emerald-950/20 px-3 py-3">
                       <div className="text-[10px] uppercase tracking-widest text-emerald-300 font-black">1. Extract</div>
                       <div className="mt-1 text-[11px] text-slate-300">Press and hold the central button for starter capital.</div>
