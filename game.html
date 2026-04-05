@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Axiom Syndicate: Infinite Hegemony v1.0</title>
+  <title>Axiom Syndicate: Infinite Hegemony v0.7.1a</title>
   
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -13,11 +13,12 @@
 
   <style>
     :root {
-      --bg-dark: #020202;
+      --bg-dark: #010203;
       --term-green: #10b981;
       --term-dark-green: #064e3b;
-      --panel-bg: rgba(10, 15, 22, 0.95);
-      --panel-border: rgba(16, 185, 129, 0.3);
+      --panel-bg: rgba(7, 10, 15, 0.85);
+      --panel-border: rgba(16, 185, 129, 0.25);
+      --accent-glow: 0 0 15px rgba(16, 185, 129, 0.4);
     }
     
     body { 
@@ -25,46 +26,47 @@
       background-color: var(--bg-dark); 
       color: #e2e8f0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background-image: radial-gradient(circle at 50% 50%, #080a0c 0%, #000000 100%);
+      background-image: radial-gradient(circle at 50% 50%, #06090d 0%, #000000 100%);
       overscroll-behavior-y: none;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
     }
 
-    /* Immersion Lock */
     .lock-scroll { overflow: hidden !important; height: 100vh !important; width: 100vw !important; }
-    
-    /* Hide scrollbars */
     * { scrollbar-width: none; -ms-overflow-style: none; }
     *::-webkit-scrollbar { display: none; }
 
-    /* CRT Scanline Effect */
+    /* Premium Scanline Effect */
     .scanlines {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-      background-size: 100% 4px, 3px 100%;
-      z-index: 50; pointer-events: none; opacity: 0.5;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+      background-size: 100% 3px, 3px 100%;
+      z-index: 50; pointer-events: none; opacity: 0.6;
     }
 
     .vignette {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.85) 100%);
+      background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,0.95) 100%);
       z-index: 49; pointer-events: none;
-      animation: breathe 8s ease-in-out infinite alternate;
+      animation: breathe 10s ease-in-out infinite alternate;
     }
 
-    @keyframes breathe { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+    @keyframes breathe { 0% { opacity: 0.8; } 100% { opacity: 1; } }
 
     .bg-grid {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background-image: linear-gradient(to right, rgba(16, 185, 129, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
-      background-size: 40px 40px; z-index: -1;
+      background-image: linear-gradient(to right, rgba(16, 185, 129, 0.03) 1px, transparent 1px), 
+                        linear-gradient(to bottom, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px; z-index: -1;
     }
 
     .glass-panel {
-      background: var(--panel-bg); backdrop-filter: blur(12px);
-      border: 1px solid var(--panel-border); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+      background: var(--panel-bg); 
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border); 
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 8px 32px rgba(0, 0, 0, 0.8);
     }
 
     .glitch-hover:hover {
@@ -79,20 +81,44 @@
     }
     
     .hold-btn { touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
-    .hold-btn:active:not(:disabled) { transform: scale(0.96); transition: transform 0.05s; }
+    .hold-btn:active:not(:disabled) { transform: scale(0.97); transition: transform 0.05s; }
     
-    @keyframes floatUpAndFade { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-60px) scale(1.3); opacity: 0; } }
-    @keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes floatUpAndFade { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
+    @keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+    
     @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .animate-spin-slow { animation: spin-slow 15s linear infinite; }
-    .animate-spin-slower-reverse { animation: spin-slow 25s linear infinite reverse; }
-    .modal-animate { animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-    /* Hardware Specific Glitches */
-    .system-glitch-1 { filter: hue-rotate(90deg) blur(1px); transform: translate(2px, -2px); }
-    .system-glitch-2 { filter: invert(1) hue-rotate(180deg); transform: skew(2deg); }
+    .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+    .animate-spin-slower-reverse { animation: spin-slow 30s linear infinite reverse; }
+    
+    .modal-animate { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    
     .bankrupt-pulse { animation: bankrupt-glow 2s infinite alternate; }
-    @keyframes bankrupt-glow { 0% { box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.3); } 100% { box-shadow: inset 0 0 80px rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.8); } }
+    @keyframes bankrupt-glow { 
+      0% { box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); } 
+      100% { box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.6); } 
+    }
+
+    /* Hardware Ticker */
+    .ticker-container { 
+      height: 28px; background: #000; border-bottom: 1px solid rgba(16,185,129,0.4); 
+      display: flex; align-items: center; overflow: hidden; white-space: nowrap; 
+      font-size: 11px; font-weight: bold; color: #10b981; z-index: 100; flex-shrink: 0; 
+    }
+    .ticker-scroll { display: inline-block; animation: ticker 35s linear infinite; padding-left: 100%; }
+    @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-200%); } }
+    
+    .latency-warning { animation: pulse-red 0.8s infinite; color: #ef4444 !important; text-shadow: 0 0 8px rgba(239,68,68,0.8); }
+    @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .cyber-panel-border { position: relative; }
+    .cyber-panel-border::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 10px; height: 10px;
+      border-top: 2px solid var(--term-green); border-left: 2px solid var(--term-green);
+    }
+    .cyber-panel-border::after {
+      content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px;
+      border-bottom: 2px solid var(--term-green); border-right: 2px solid var(--term-green);
+    }
   </style>
 </head>
 <body class="lock-scroll" id="main-body">
@@ -106,19 +132,17 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-    const SAVE_KEY = 'axiomSyndicateSave_v1.0.0_infinite'; 
+    const SAVE_KEY = 'axiomSyndicateSave_v0.7.1a'; 
 
-    // --- MATHEMATICAL DILATION FOR 10-YEAR LIFESPAN ---
-    // This forcibly suppresses the multiplier exponent once numbers get absurd, 
-    // ensuring the journey to 1e300 takes years of optimization.
+    // --- MATHEMATICAL DILATION FOR 10-YEAR LIFESPAN (Harsher Curves) ---
     const applyDilation = (val) => {
         if (val <= 1e12) return val;
         let dilated = val;
-        if (dilated > 1e12) dilated = 1e12 * Math.pow(dilated / 1e12, 0.85); // 1st Wall
-        if (dilated > 1e24) dilated = 1e24 * Math.pow(dilated / 1e24, 0.70); // 2nd Wall
-        if (dilated > 1e40) dilated = 1e40 * Math.pow(dilated / 1e40, 0.50); // 3rd Wall
-        if (dilated > 1e60) dilated = 1e60 * Math.pow(dilated / 1e60, 0.30); // 4th Wall
-        if (dilated > 1e100) dilated = 1e100 * Math.pow(dilated / 1e100, 0.15); // The Abyss
+        if (dilated > 1e12) dilated = 1e12 * Math.pow(dilated / 1e12, 0.85); 
+        if (dilated > 1e24) dilated = 1e24 * Math.pow(dilated / 1e24, 0.70); 
+        if (dilated > 1e40) dilated = 1e40 * Math.pow(dilated / 1e40, 0.50); 
+        if (dilated > 1e60) dilated = 1e60 * Math.pow(dilated / 1e60, 0.30); 
+        if (dilated > 1e100) dilated = 1e100 * Math.pow(dilated / 1e100, 0.15); 
         return dilated;
     };
 
@@ -136,17 +160,17 @@
         return Number.isFinite(result) && !Number.isNaN(result) ? result : currentValue;
     };
 
-    // --- TAX BRACKETS (Real-world scaling) ---
+    // --- HARSH TAX BRACKETS ---
     const TAX_BRACKETS = [
-        { threshold: 1e3, rate: 0.10 },     // $1,000 / sec
-        { threshold: 1e5, rate: 0.20 },     // $100k / sec
-        { threshold: 1e7, rate: 0.30 },     // $10M / sec
-        { threshold: 1e10, rate: 0.40 },    // $10B / sec
-        { threshold: 1e13, rate: 0.55 },    // $10T / sec
-        { threshold: 1e18, rate: 0.70 },    // $1 Quintillion / sec
-        { threshold: 1e24, rate: 0.85 },    // $1 Septillion / sec
-        { threshold: 1e33, rate: 0.95 },    // Decillion Hedge
-        { threshold: 1e50, rate: 0.99 }     // The Hegemony Tax
+        { threshold: 1e3, rate: 0.10 },
+        { threshold: 1e5, rate: 0.20 },
+        { threshold: 1e7, rate: 0.30 },
+        { threshold: 1e10, rate: 0.40 },
+        { threshold: 1e13, rate: 0.55 },
+        { threshold: 1e18, rate: 0.70 },
+        { threshold: 1e24, rate: 0.85 },
+        { threshold: 1e33, rate: 0.95 },
+        { threshold: 1e50, rate: 0.99 }
     ];
 
     const LORE_MESSAGES = [
@@ -157,7 +181,8 @@
       { id: 5, req: (s) => s.capital >= 1e6, text: "Capital reserves exceed $1,000,000. The Revenue Service is watching your gross income." },
       { id: 6, req: (s) => s.buyouts >= 1, text: "Market monopolized. Takeover complete. Your Equity buffers our reality." },
       { id: 7, req: (s) => s.data >= 1000, text: "Substantial user data harvested. The algorithm is learning consumer behavior." },
-      { id: 8, req: (s) => s.capital >= 1e12, text: "Trillion-dollar valuation. Dilation engines engaging to prevent systemic economic collapse." }
+      { id: 8, req: (s) => s.capital >= 1e12, text: "Trillion-dollar valuation. Dilation engines engaging to prevent systemic economic collapse." },
+      { id: 9, req: (s) => s.backlog >= 1000, text: "Logistics strain detected. Backlogs increasing. System stalls will incur severe output penalties." }
     ];
 
     const CORPORATE_RANKS = [
@@ -175,39 +200,40 @@
       { name: "Multiversal Monopoly", req: 1e100, mult: 5000000 },
     ];
 
-    // ALL VALUES PER SECOND. Massive costs, realistic margins.
+    // Nerfed early game constants to significantly slow early pace
     const INITIAL_DEPARTMENTS = {
-      stand: { id: 'stand', name: 'Lemonade Stand', baseCost: 50, baseProd: 0.10, baseUpkeep: 0, costMult: 1.30, type: 'capital', icon: 'Coins', desc: 'A humble, tax-free beginning.' },
-      kiosk: { id: 'kiosk', name: 'Mall Kiosk', baseCost: 25000, baseProd: 6, baseUpkeep: 4.5, costMult: 1.40, type: 'capital', icon: 'Store', desc: 'High rent, cheap phone accessories.' },
-      franchise: { id: 'franchise', name: 'Fast Food Franchise', baseCost: 2.5e6, baseProd: 85, baseUpkeep: 60, costMult: 1.45, type: 'capital', icon: 'Coffee', desc: 'Standardized burgers and minimum wage.' },
-      supermarket: { id: 'supermarket', name: 'Regional Supermarket', baseCost: 250e6, baseProd: 4500, baseUpkeep: 3200, costMult: 1.50, type: 'capital', icon: 'ShoppingCart', desc: 'High volume, brutal margins.' },
+      stand: { id: 'stand', name: 'Lemonade Stand', baseCost: 250, baseProd: 0.05, baseUpkeep: 0, costMult: 1.50, type: 'capital', icon: 'Coins', desc: 'A humble, tax-free beginning.' },
+      kiosk: { id: 'kiosk', name: 'Mall Kiosk', baseCost: 45000, baseProd: 3.5, baseUpkeep: 4.5, costMult: 1.55, type: 'capital', icon: 'Store', desc: 'High rent, cheap phone accessories.' },
+      franchise: { id: 'franchise', name: 'Fast Food Franchise', baseCost: 3.5e6, baseProd: 40, baseUpkeep: 60, costMult: 1.60, type: 'capital', icon: 'Coffee', desc: 'Standardized burgers and minimum wage.' },
+      supermarket: { id: 'supermarket', name: 'Regional Supermarket', baseCost: 350e6, baseProd: 3500, baseUpkeep: 3200, costMult: 1.55, type: 'capital', icon: 'ShoppingCart', desc: 'High volume, brutal margins.' },
       logistics: { id: 'logistics', name: 'Logistics Network', baseCost: 15e9, baseProd: 120000, baseUpkeep: 85000, costMult: 1.55, type: 'capital', icon: 'Truck', desc: 'Next-day delivery supply chain.' },
       bank: { id: 'bank', name: 'Investment Bank', baseCost: 4.5e12, baseProd: 8e6, baseUpkeep: 5e6, costMult: 1.60, type: 'capital', icon: 'Bank', desc: 'Leveraging debt to buy the world.' },
       military: { id: 'military', name: 'Private Military', baseCost: 800e12, baseProd: 650e6, baseUpkeep: 400e6, costMult: 1.65, type: 'capital', icon: 'Jet', desc: 'Securing global assets by force.' },
       orbital: { id: 'orbital', name: 'Orbital Mining Rig', baseCost: 150e15, baseProd: 45e9, baseUpkeep: 30e9, costMult: 1.70, type: 'capital', icon: 'Rocket', desc: 'Harvesting rare earth metals.' },
       asteroid: { id: 'asteroid', name: 'Asteroid Foundry', baseCost: 50e18, baseProd: 3.5e12, baseUpkeep: 2.5e12, costMult: 1.75, type: 'capital', icon: 'Meteor', desc: 'Zero-G manufacturing facilities.' },
       dyson: { id: 'dyson', name: 'Dyson Constructors', baseCost: 10e21, baseProd: 200e12, baseUpkeep: 150e12, costMult: 1.80, type: 'capital', icon: 'Sun', desc: 'Encapsulating stars for energy.' },
-      
-      startup: { id: 'startup', name: 'Data Mining Startup', baseCost: 500e6, baseProd: 0.1, baseUpkeep: 0, costMult: 1.50, type: 'data', icon: 'Database', desc: 'Harvests user info for ads. Produces DATA.' },
-      social: { id: 'social', name: 'Social Media Empire', baseCost: 75e9, baseProd: 5, baseUpkeep: 0, costMult: 1.55, type: 'data', icon: 'Smartphone', desc: 'Monetizes the attention economy.' },
-      cloud: { id: 'cloud', name: 'Cloud Infrastructure', baseCost: 10e12, baseProd: 150, baseUpkeep: 0, costMult: 1.60, type: 'data', icon: 'Server', desc: 'Hosts the internet.' },
-      quantum: { id: 'quantum', name: 'Quantum Computing', baseCost: 2.5e15, baseProd: 8000, baseUpkeep: 0, costMult: 1.65, type: 'data', icon: 'Microchip', desc: 'Cracking encryption in real-time.' },
-      agi: { id: 'agi', name: 'AGI Core', baseCost: 500e15, baseProd: 450000, baseUpkeep: 0, costMult: 1.70, type: 'data', icon: 'Brain', desc: 'Predicting human behavior.' },
-      neural: { id: 'neural', name: 'Neural Link Net', baseCost: 100e18, baseProd: 20e6, baseUpkeep: 0, costMult: 1.75, type: 'data', icon: 'Wifi', desc: 'Direct brain-to-market data extraction.' },
-      reality: { id: 'reality', name: 'Simulation Engine', baseCost: 50e21, baseProd: 1e9, baseUpkeep: 0, costMult: 1.80, type: 'data', icon: 'VR', desc: 'Traps users in a digital reality.' },
+      startup: { id: 'startup', name: 'Data Mining Startup', baseCost: 1e9, baseProd: 0.1, baseUpkeep: 0, costMult: 1.55, type: 'data', icon: 'Database', desc: 'Harvests user info for ads. Produces DATA.' },
+      social: { id: 'social', name: 'Social Media Empire', baseCost: 100e9, baseProd: 5, baseUpkeep: 0, costMult: 1.60, type: 'data', icon: 'Smartphone', desc: 'Monetizes the attention economy.' },
+      cloud: { id: 'cloud', name: 'Cloud Infrastructure', baseCost: 15e12, baseProd: 150, baseUpkeep: 0, costMult: 1.65, type: 'data', icon: 'Server', desc: 'Hosts the internet.' },
+      quantum: { id: 'quantum', name: 'Quantum Computing', baseCost: 3.5e15, baseProd: 8000, baseUpkeep: 0, costMult: 1.70, type: 'data', icon: 'Microchip', desc: 'Cracking encryption in real-time.' },
+      agi: { id: 'agi', name: 'AGI Core', baseCost: 750e15, baseProd: 450000, baseUpkeep: 0, costMult: 1.75, type: 'data', icon: 'Brain', desc: 'Predicting human behavior.' },
+      neural: { id: 'neural', name: 'Neural Link Net', baseCost: 150e18, baseProd: 20e6, baseUpkeep: 0, costMult: 1.80, type: 'data', icon: 'Wifi', desc: 'Direct brain-to-market data extraction.' },
+      reality: { id: 'reality', name: 'Simulation Engine', baseCost: 75e21, baseProd: 1e9, baseUpkeep: 0, costMult: 1.85, type: 'data', icon: 'VR', desc: 'Traps users in a digital reality.' },
     };
 
     const INITIAL_POLICIES = {
-      marketing: { id: 'marketing', name: 'Aggressive Marketing', baseCost: 250, costMult: 4.0, effectType: 'click_power', effectBase: 0.1, desc: 'Increases manual gross extraction.' },
-      overclock: { id: 'overclock', name: 'Overclocked Relays', baseCost: 10000, costMult: 6.0, effectType: 'click_speed', effectBase: 15, desc: 'Decreases Hold-to-Click delay by 15ms.' },
-      synergy: { id: 'synergy', name: 'Corporate Synergy', baseCost: 150000, costMult: 5.0, effectType: 'click_synergy', effectBase: 0.01, desc: 'Clicks generate an extra 1% of your Idle Gross rate.' },
-      automation: { id: 'automation', name: 'Algorithmic Trading', baseCost: 5e6, costMult: 8.0, effectType: 'auto_click', effectBase: 2, desc: 'Automatically executes manual trades per second.' },
-      taxEvasion: { id: 'taxEvasion', name: 'Offshore Accounts', baseCost: 100e6, costMult: 12.0, effectType: 'tax_reduction', effectBase: 0.02, desc: 'Subtracts 2% from your effective Tax Rate.' },
-      subsidies: { id: 'subsidies', name: 'Subsidized Maintenance', baseCost: 250e6, costMult: 10.0, effectType: 'upkeep_reduction', effectBase: 0.03, desc: 'Reduces all physical Upkeep costs by 3%.' },
-      espionage: { id: 'espionage', name: 'Corporate Espionage', baseCost: 5e9, costMult: 12.0, effectType: 'capital_mult', effectBase: 0.30, desc: 'Steal IP to boost Gross Capital production by 30%.' },
-      dataBrokering: { id: 'dataBrokering', name: 'Data Brokering', baseCost: 100e9, costMult: 15.0, effectType: 'data_mult', effectBase: 0.20, desc: 'Boosts User Data extraction by 20%.' },
-      lobbying: { id: 'lobbying', name: 'Government Lobbying', baseCost: 2e12, costMult: 12.0, effectType: 'ai_cost_reduction', effectBase: 0.05, desc: 'Reduces the Data cost of the R&D Department.' },
-      aiManager: { id: 'aiManager', name: 'Executive AI', baseCost: 1e18, costMult: 500.0, effectType: 'auto_buy', effectBase: 1, desc: 'Unlocks Executive AI to automatically acquire assets safely.' },
+      ledger: { id: 'ledger', name: 'Memory Ledger', baseCost: 750, costMult: 3.5, effectType: 'log_capacity', effectBase: 0.5, desc: 'Increases Transaction Log Capacity by 50%.' },
+      processor: { id: 'processor', name: 'Logic Core', baseCost: 2000, costMult: 4.0, effectType: 'log_speed', effectBase: 0.5, desc: 'Increases Log Processing Speed by 50%.' },
+      marketing: { id: 'marketing', name: 'Aggressive Marketing', baseCost: 1500, costMult: 5.0, effectType: 'click_power', effectBase: 0.1, desc: 'Increases manual gross extraction.' },
+      overclock: { id: 'overclock', name: 'Overclocked Relays', baseCost: 25000, costMult: 7.0, effectType: 'click_speed', effectBase: 15, desc: 'Decreases Hold-to-Click delay by 15ms.' },
+      synergy: { id: 'synergy', name: 'Corporate Synergy', baseCost: 250000, costMult: 5.5, effectType: 'click_synergy', effectBase: 0.01, desc: 'Clicks generate an extra 1% of your Idle Gross rate.' },
+      automation: { id: 'automation', name: 'Algorithmic Trading', baseCost: 8e6, costMult: 8.5, effectType: 'auto_click', effectBase: 2, desc: 'Automatically executes manual trades per second.' },
+      taxEvasion: { id: 'taxEvasion', name: 'Offshore Accounts', baseCost: 150e6, costMult: 12.0, effectType: 'tax_reduction', effectBase: 0.02, desc: 'Subtracts 2% from your effective Tax Rate.' },
+      subsidies: { id: 'subsidies', name: 'Subsidized Maintenance', baseCost: 350e6, costMult: 10.0, effectType: 'upkeep_reduction', effectBase: 0.03, desc: 'Reduces all physical Upkeep costs by 3%.' },
+      espionage: { id: 'espionage', name: 'Corporate Espionage', baseCost: 8e9, costMult: 12.0, effectType: 'capital_mult', effectBase: 0.30, desc: 'Steal IP to boost Gross Capital production by 30%.' },
+      dataBrokering: { id: 'dataBrokering', name: 'Data Brokering', baseCost: 150e9, costMult: 15.0, effectType: 'data_mult', effectBase: 0.20, desc: 'Boosts User Data extraction by 20%.' },
+      lobbying: { id: 'lobbying', name: 'Government Lobbying', baseCost: 5e12, costMult: 12.0, effectType: 'ai_cost_reduction', effectBase: 0.05, desc: 'Reduces the Data cost of the R&D Department.' },
+      aiManager: { id: 'aiManager', name: 'Executive AI', baseCost: 2.5e18, costMult: 500.0, effectType: 'auto_buy', effectBase: 1, desc: 'Unlocks Executive AI to automatically acquire assets safely.' },
     };
 
     const PRESTIGE_UPGRADES = {
@@ -239,7 +265,6 @@
       const isNeg = num < 0;
       const absNum = Math.abs(num);
       let result = "";
-
       if (absNum < 1000) result = (absNum % 1 !== 0) ? absNum.toFixed(1) : Math.floor(absNum).toString();
       else if (notation === 'scientific' || absNum >= 1e63) {
         result = absNum.toExponential(2).replace('e+', 'e');
@@ -251,13 +276,13 @@
       }
       return (isNeg ? "-" : "") + result;
     };
+    
     const formatCurrency = (num, notation = 'standard') => {
       const isNeg = num < 0;
       return (isNeg ? "-$" : "$") + formatNumber(Math.abs(num), notation);
     };
 
     const calculateCost = (baseCost, costMult, currentLevel, amount, costCrunchLevel = 0) => {
-      // Softcap cost crunch so things don't become free
       const crunchFactor = Math.max(0.5, Math.pow(0.98, costCrunchLevel));
       const actualMult = costMult * crunchFactor;
       if (amount === 1) return baseCost * Math.pow(actualMult, currentLevel);
@@ -284,7 +309,6 @@
       }
       let current = CORPORATE_RANKS[rIdx];
       let next = CORPORATE_RANKS[rIdx + 1] || null;
-
       if (!next && lifetimeCap >= current.req) {
         const excess = Math.max(1, lifetimeCap / current.req);
         const infiniteLevel = Math.floor(Math.log10(excess) / 10) + 1; 
@@ -316,10 +340,11 @@
 
     function App() {
       const [preBoot, setPreBoot] = useState(true);
-      const [scolding, setScolding] = useState(false);
+      const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
       
       const [gameState, setGameState] = useState({
         capital: 0, data: 0, equity: 0, lifetimeCapital: 0, runCapital: 0, buyouts: 0,
+        backlog: 0, hype: 0, totalTime: 0, floatingTexts: [],
         departmentRegistry: { ...INITIAL_DEPARTMENTS }, policyRegistry: { ...INITIAL_POLICIES }, prestigeRegistry: { ...PRESTIGE_UPGRADES },
         departments: Object.keys(INITIAL_DEPARTMENTS).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
         policies: Object.keys(INITIAL_POLICIES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
@@ -334,29 +359,39 @@
       const stateRef = useRef(gameState);
       useEffect(() => { stateRef.current = gameState; }, [gameState]);
 
-      // Advanced Finances Tracking
-      const [finances, setFinances] = useState({ gross: 0, upkeep: 0, profit: 0, taxRate: 0, taxAmount: 0, net: 0, dataRate: 0, isBankrupt: false, dilation: 1 });
-      
-      const [floatingTexts, setFloatingTexts] = useState([]);
+      const [finances, setFinances] = useState({ gross: 0, upkeep: 0, profit: 0, taxRate: 0, taxAmount: 0, net: 0, dataRate: 0, isBankrupt: false, dilation: 1, backlog: 0, logCap: 50, logSpeed: 2, isStalled: false, hypeBoost: 1 });
       const [isResearching, setIsResearching] = useState(false);
       const [saveNotice, setSaveNotice] = useState("");
-      
       const [mobileTab, setMobileTab] = useState('desk');
-      const [strategyTab, setStrategyTab] = useState('policies');
+      const [strategyTab, setStrategyTab] = useState('stats');
       const [offlineReport, setOfflineReport] = useState(null);
       const [modalState, setModalState] = useState(null); 
       
+      // FIXED: ImportRef was missing, causing settings tab to crash
+      const importRef = useRef(null);
       const clickContainerRef = useRef(null);
       const lastSaveTime = useRef(Date.now());
       const hasProcessedOffline = useRef(false);
-      const importRef = useRef(null);
 
       const initiateConnection = async () => {
         try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch (err) {}
-        setPreBoot(false); setScolding(false);
+        setPreBoot(false);
       };
 
-      // --- SAVE/LOAD ---
+      const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen();
+        }
+      };
+
+      useEffect(() => {
+        const handleFSChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', handleFSChange);
+        return () => document.removeEventListener('fullscreenchange', handleFSChange);
+      }, []);
+
       useEffect(() => {
         const saved = localStorage.getItem(SAVE_KEY);
         if (saved) {
@@ -372,6 +407,7 @@
               prestigeUpgrades: { ...Object.keys(PRESTIGE_UPGRADES).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), ...(parsed.prestigeUpgrades || {}) },
               stats: { ...prev.stats, ...(parsed.stats || {}) },
               settings: { ...prev.settings, ...(parsed.settings || {}) },
+              floatingTexts: [], // Prevent dead elements on load
               monopolyBuff: parsed.monopolyBuff && parsed.monopolyBuff.expiresAt > Date.now() ? parsed.monopolyBuff : { active: false, expiresAt: 0, mult: 1 },
               runCapital: parsed.runCapital !== undefined ? parsed.runCapital : (parsed.lifetimeCapital || 0),
               lastTick: parsed.lastTick || Date.now()
@@ -383,7 +419,7 @@
       }, []);
 
       const saveGame = useCallback((manual = false) => {
-        const stateToSave = { ...stateRef.current, lastTick: Date.now() };
+        const stateToSave = { ...stateRef.current, lastTick: Date.now(), floatingTexts: [] };
         localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
         lastSaveTime.current = Date.now();
         if (manual) showToast("System Synchronized.");
@@ -391,7 +427,6 @@
 
       const showToast = (msg) => { setSaveNotice(msg); setTimeout(() => setSaveNotice(""), 2000); };
 
-      // --- UTILITY EFFECTS CALC ---
       const calcEffect = useCallback((registry, levels, type, isAdd = false) => {
           return Object.entries(registry).reduce((acc, [key, upg]) => {
               if (upg.effectType === type) return isAdd ? acc + ((levels[key]||0)*upg.effectBase) : acc * Math.pow(1+upg.effectBase, levels[key]||0); 
@@ -399,14 +434,13 @@
           }, isAdd ? 0 : 1);
       }, []);
 
-      // Evaluates the raw financial output of a department
       const evaluateDepartment = useCallback((dep, amount, currentState) => {
           if (!amount) return { gross: 0, upkeep: 0, data: 0 };
           
           const mBoost = getMilestoneBoost(amount);
           const rBoost = getRankInfo(currentState.lifetimeCapital).current.mult;
           const eqBoost = calcEffect(currentState.prestigeRegistry, currentState.prestigeUpgrades, 'global_mult', false);
-          const dBoost = applyDilation(1 + (Math.sqrt(currentState.data) * 0.01)); // Dilation applied to data buff
+          const dBoost = applyDilation(1 + (Math.sqrt(currentState.data) * 0.01));
           const capMult = calcEffect(currentState.policyRegistry, currentState.policies, 'capital_mult', false);
           const dataPolEff = calcEffect(currentState.policyRegistry, currentState.policies, 'data_mult', false);
           
@@ -430,28 +464,197 @@
           }
       }, [calcEffect]);
 
-      // --- HOLD MECHANICS ---
-      const activeHoldRef = useRef(null);
-      const holdTimerRef = useRef(null);
+      // Core Game Loop
+      useEffect(() => {
+        let animationFrameId;
+        const gameLoop = () => {
+          const now = Date.now();
+          if (preBoot) {
+              animationFrameId = requestAnimationFrame(gameLoop);
+              return;
+          }
+
+          setGameState(prev => {
+            const deltaMs = now - prev.lastTick;
+            if (deltaMs < 50) return prev; 
+            
+            let rawTimeBoost = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'time_warp', false);
+            const timeBoost = applyDilation(rawTimeBoost);
+
+            let realDeltaSec = Math.min(deltaMs, 2592000000) / 1000;
+            let deltaSec = realDeltaSec * timeBoost;
+            
+            const newState = { ...prev, lastTick: now };
+            newState.stats.timePlayed += realDeltaSec;
+            newState.totalTime += realDeltaSec / 86400; // 1 real day = 1 game day
+
+            // Cleanup floating texts
+            newState.floatingTexts = newState.floatingTexts.filter(ft => ft.expires > now);
+            
+            let totalGross = 0, totalUpkeep = 0, totalData = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'base_data', true);
+            
+            Object.keys(newState.departmentRegistry).forEach(key => {
+                const dep = newState.departmentRegistry[key];
+                const amount = newState.departments[key] || 0;
+                if (amount > 0) {
+                    const evalRes = evaluateDepartment(dep, amount, newState);
+                    totalGross += evalRes.gross;
+                    totalUpkeep += evalRes.upkeep;
+                    totalData += evalRes.data;
+                }
+            });
+
+            if (newState.monopolyBuff.active && now > newState.monopolyBuff.expiresAt) newState.monopolyBuff = { active: false, expiresAt: 0, mult: 1 };
+            const activeMonopolyMult = newState.monopolyBuff.active ? newState.monopolyBuff.mult : 1;
+            
+            totalGross *= activeMonopolyMult;
+            totalData *= activeMonopolyMult;
+
+            // ---- LOGISTICS & HYPE CALCULATIONS ----
+            let logCapMult = calcEffect(newState.policyRegistry, newState.policies, 'log_capacity', false);
+            let logSpeedMult = calcEffect(newState.policyRegistry, newState.policies, 'log_speed', false);
+            
+            let baseLogCap = applyDilation(50 * logCapMult);
+            let baseLogSpeed = applyDilation(2 * logSpeedMult);
+            let logPressure = totalGross * 0.25;
+
+            newState.backlog = safeAdd(newState.backlog, (logPressure * deltaSec) - (baseLogSpeed * deltaSec));
+            if (newState.backlog < 0) newState.backlog = 0;
+
+            const isStalled = newState.backlog >= baseLogCap;
+            const latencyPenalty = isStalled ? 0.5 : 1.0;
+
+            newState.hype = Math.max(0, newState.hype - (0.15 * deltaSec));
+            const hypeBoost = 1 + (newState.hype * 0.25);
+
+            totalGross = totalGross * hypeBoost * latencyPenalty;
+            // -----------------------------------------
+
+            const profitBeforeTax = totalGross - totalUpkeep;
+            let effectiveTaxRate = 0;
+            
+            if (profitBeforeTax > 0) {
+                for (let i = TAX_BRACKETS.length - 1; i >= 0; i--) {
+                    if (profitBeforeTax >= TAX_BRACKETS[i].threshold) {
+                        effectiveTaxRate = TAX_BRACKETS[i].rate;
+                        break;
+                    }
+                }
+            }
+            
+            const evasionDrop = calcEffect(newState.policyRegistry, newState.policies, 'tax_reduction', true) + calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'tax_reduction', true);
+            effectiveTaxRate = Math.max(0, effectiveTaxRate - evasionDrop);
+
+            const taxAmount = profitBeforeTax > 0 ? profitBeforeTax * effectiveTaxRate : 0;
+            const netCapitalRate = totalGross - totalUpkeep - taxAmount;
+            
+            const isBankrupt = newState.capital <= 0 && netCapitalRate < 0;
+            if (isBankrupt) { 
+                newState.capital = 0; 
+                totalData = 0; 
+            }
+            
+            const autoClicks = calcEffect(newState.policyRegistry, newState.policies, 'auto_click', true);
+            let autoGain = 0;
+            if (autoClicks > 0 && !isBankrupt) {
+                const basePower = calcEffect(newState.policyRegistry, newState.policies, 'click_power', true);
+                const clickSynergy = calcEffect(newState.policyRegistry, newState.policies, 'click_synergy', true);
+                const eqBoost = applyDilation(calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'global_mult', false));
+                autoGain = ((0.5 + basePower + (totalGross * clickSynergy)) * eqBoost * activeMonopolyMult * hypeBoost) * autoClicks;
+            }
+
+            setFinances({
+                gross: totalGross, upkeep: totalUpkeep, profit: profitBeforeTax, 
+                taxRate: effectiveTaxRate, taxAmount, net: netCapitalRate, 
+                dataRate: totalData, isBankrupt, dilation: applyDilation(1e25) / 1e25,
+                backlog: newState.backlog, logCap: baseLogCap, logSpeed: baseLogSpeed,
+                isStalled, hypeBoost
+            });
+
+            const tickNet = netCapitalRate * deltaSec;
+            const tickAuto = autoGain * deltaSec;
+            const totalCapChange = tickNet + tickAuto;
+            
+            if (!hasProcessedOffline.current) {
+                hasProcessedOffline.current = true;
+                if (deltaSec > 60 && (totalCapChange !== 0 || totalData > 0)) setOfflineReport({ time: deltaSec, capital: totalCapChange, data: totalData * deltaSec });
+            }
+
+            if (totalCapChange !== 0) { 
+                newState.capital = safeAdd(newState.capital, totalCapChange); 
+                if (newState.capital < 0) newState.capital = 0; 
+                if (totalCapChange > 0) {
+                    newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, totalCapChange); 
+                    newState.runCapital = safeAdd(newState.runCapital, totalCapChange); 
+                }
+            }
+
+            if (totalData > 0 && !isBankrupt) newState.data = safeAdd(newState.data, totalData * deltaSec);
+            
+            if (!newState.marketBoom && Math.random() < (0.005 * deltaSec) && !isBankrupt) { 
+              const r = Math.random();
+              newState.marketBoom = { 
+                x: Math.floor(Math.random() * 80) + 10, y: Math.floor(Math.random() * 80) + 10, 
+                expiresAt: now + 15000, type: r > 0.90 && newState.data > 0 ? 'monopoly' : r > 0.65 && newState.data > 0 ? 'data' : 'cash' 
+              };
+            }
+            if (newState.marketBoom && now > newState.marketBoom.expiresAt) newState.marketBoom = null;
+            
+            if (newState.policies.aiManager > 0 && newState.settings.aiManagerOn && !isBankrupt && Math.random() < (0.5 * deltaSec)) {
+               const drift = newState.prestigeUpgrades.bailouts || 0;
+               let bestBuy = null;
+               Object.keys(newState.departmentRegistry).forEach(key => {
+                   const dep = newState.departmentRegistry[key];
+                   const count = newState.departments[key] || 0;
+                   const cost = calculateCost(dep.baseCost, dep.costMult, count, 1, drift);
+                   const testEval = evaluateDepartment(dep, count + 1, newState);
+                   const isSafe = (totalUpkeep + testEval.upkeep) < (totalGross * 0.8) || dep.type === 'data';
+                   if (newState.capital >= cost && isSafe) { if (!bestBuy || cost > bestBuy.cost) bestBuy = { key, cost }; }
+               });
+               if (bestBuy) { newState.capital -= bestBuy.cost; newState.departments[bestBuy.key] = (newState.departments[bestBuy.key] || 0) + 1; }
+            }
+
+            if (now - lastSaveTime.current > 10000) {
+               localStorage.setItem(SAVE_KEY, JSON.stringify({...newState, floatingTexts: []}));
+               lastSaveTime.current = now;
+            }
+
+            return newState;
+          });
+          animationFrameId = requestAnimationFrame(gameLoop);
+        };
+        animationFrameId = requestAnimationFrame(gameLoop);
+        return () => cancelAnimationFrame(animationFrameId);
+      }, [calcEffect, evaluateDepartment, preBoot]);
+
+      // Calendar Formatting
+      const calendar = useMemo(() => {
+        const days = Math.floor(gameState.totalTime);
+        const year = Math.floor(days / 365) + 1;
+        const dayOfYear = (days % 365) + 1;
+        
+        const totalSeconds = gameState.totalTime * 86400;
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        
+        return { year, dayOfYear, hours, minutes, seconds };
+      }, [gameState.totalTime]);
 
       const triggerBuyAction = useCallback((type, key) => {
         setGameState(prev => {
           let cost, canAfford = false, amountToBuy = prev.buyMultiplier;
           const drift = prev.prestigeUpgrades.bailouts || 0;
           let nextState = { ...prev };
-
+          
           if (type === 'department') {
             const dep = prev.departmentRegistry[key];
             const currentLevel = prev.departments[key] || 0;
             const currency = prev.capital; 
-            
             if (amountToBuy === -1) amountToBuy = calculateMaxAffordable(dep.baseCost, dep.costMult, currentLevel, currency, drift);
             if (amountToBuy <= 0) return prev;
-            
             cost = calculateCost(dep.baseCost, dep.costMult, currentLevel, amountToBuy, drift);
             canAfford = currency >= cost;
-            
-            // BANKRUPTCY SAFETY: Don't allow max buy to drop capital to 0 if net is negative (handled mostly by player awareness, but let's let them fail if they want to)
             if (canAfford) {
               nextState.capital = prev.capital - cost;
               nextState.departments = { ...prev.departments, [key]: currentLevel + amountToBuy };
@@ -474,6 +677,9 @@
         });
       }, []);
 
+      const activeHoldRef = useRef(null);
+      const holdTimerRef = useRef(null);
+      
       const startHoldBuy = useCallback((type, key, e) => {
         if (e && e.cancelable) e.preventDefault(); 
         triggerBuyAction(type, key); 
@@ -494,9 +700,54 @@
         if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       }, []);
 
+      const handleManualClick = useCallback((cx, cy) => {
+        setGameState(prev => {
+          const activeMonopolyMult = prev.monopolyBuff.active ? prev.monopolyBuff.mult : 1;
+          const clickSynergy = calcEffect(prev.policyRegistry, prev.policies, 'click_synergy', true);
+          const basePower = calcEffect(prev.policyRegistry, prev.policies, 'click_power', true);
+          const eqBoost = applyDilation(calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false));
+          const logCapMult = calcEffect(prev.policyRegistry, prev.policies, 'log_capacity', false);
+          
+          let grossBase = 0;
+          Object.keys(prev.departmentRegistry).forEach(key => {
+              if (prev.departmentRegistry[key].type === 'capital') {
+                  grossBase += evaluateDepartment(prev.departmentRegistry[key], prev.departments[key] || 0, prev).gross;
+              }
+          });
+
+          const localHypeBoost = 1 + (prev.hype * 0.25);
+          const isBankrupt = prev.capital <= 0;
+          const recoveryBoost = isBankrupt ? 50 : 1; 
+
+          const gain = (0.5 + basePower + (grossBase * clickSynergy)) * eqBoost * activeMonopolyMult * localHypeBoost * recoveryBoost;
+
+          // Hands on mechanics
+          let nextBacklog = Math.max(0, prev.backlog - (applyDilation(50 * logCapMult) * 0.05));
+          let nextHype = Math.min(5, prev.hype + 0.3);
+
+          let newFloatingTexts = [...prev.floatingTexts];
+          if (clickContainerRef.current && cx !== undefined && cy !== undefined) {
+            const rect = clickContainerRef.current.getBoundingClientRect();
+            newFloatingTexts.push({ id: Date.now() + Math.random(), x: cx - rect.left, y: cy - rect.top, text: `+${formatCurrency(gain, prev.settings.notation)}`, colorCode: 'emerald', expires: Date.now() + 1000 });
+            if (newFloatingTexts.length > 25) newFloatingTexts.shift();
+          }
+
+          return { 
+              ...prev, 
+              capital: safeAdd(prev.capital, gain), 
+              lifetimeCapital: safeAdd(prev.lifetimeCapital, gain), 
+              runCapital: safeAdd(prev.runCapital, gain), 
+              stats: { ...prev.stats, totalClicks: prev.stats.totalClicks + 1 },
+              backlog: nextBacklog,
+              hype: nextHype,
+              floatingTexts: newFloatingTexts
+          };
+        });
+      }, [calcEffect, evaluateDepartment]);
+
       const activeClickHoldRef = useRef(null);
       const clickTimerRef = useRef(null);
-
+      
       const startHoldClick = useCallback((e) => {
         if (e && e.cancelable) e.preventDefault(); 
         const cx = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : window.innerWidth / 2);
@@ -505,9 +756,8 @@
         const currentRefState = stateRef.current;
         const speedReduction = calcEffect(currentRefState.policyRegistry, currentRefState.policies, 'click_speed', true);
         const minDelay = Math.max(30, 250 - speedReduction); 
-
-        activeClickHoldRef.current = { delay: 400, minDelay, cx, cy, isHolding: true }; 
         
+        activeClickHoldRef.current = { delay: 400, minDelay, cx, cy, isHolding: true }; 
         const loop = () => {
             if (!activeClickHoldRef.current?.isHolding) return;
             handleManualClick(activeClickHoldRef.current.cx, activeClickHoldRef.current.cy);
@@ -518,7 +768,7 @@
         if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
         handleManualClick(cx, cy); 
         clickTimerRef.current = setTimeout(loop, activeClickHoldRef.current.delay);
-      }, [calcEffect]);
+      }, [calcEffect, handleManualClick]);
 
       const endHoldClick = useCallback((e) => {
         if (e && e.cancelable) e.preventDefault();
@@ -537,223 +787,32 @@
         }; 
       }, [endHoldBuy, endHoldClick]);
 
-      // --- CORE GAME LOOP ---
-      useEffect(() => {
-        let animationFrameId;
-        const gameLoop = () => {
-          const now = Date.now();
-          if (preBoot || scolding) {
-              animationFrameId = requestAnimationFrame(gameLoop);
-              return;
-          }
-
-          setGameState(prev => {
-            const deltaMs = now - prev.lastTick;
-            if (deltaMs < 50) return prev; 
-
-            // Time Warp Dilation
-            let rawTimeBoost = calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'time_warp', false);
-            const timeBoost = applyDilation(rawTimeBoost);
-
-            let deltaSec = Math.min(deltaMs, 2592000000) / 1000 * timeBoost; // Cap at 1 month of offline time
-            const newState = { ...prev, lastTick: now };
-            newState.stats.timePlayed += deltaSec;
-
-            // Finance Calcs
-            let totalGross = 0, totalUpkeep = 0, totalData = calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'base_data', true);
-            
-            Object.keys(newState.departmentRegistry).forEach(key => {
-                const dep = newState.departmentRegistry[key];
-                const amount = newState.departments[key] || 0;
-                if (amount > 0) {
-                    const evalRes = evaluateDepartment(dep, amount, newState);
-                    totalGross += evalRes.gross;
-                    totalUpkeep += evalRes.upkeep;
-                    totalData += evalRes.data;
-                }
-            });
-
-            // Active Monopoly Buff
-            if (newState.monopolyBuff.active && now > newState.monopolyBuff.expiresAt) newState.monopolyBuff = { active: false, expiresAt: 0, mult: 1 };
-            const activeMonopolyMult = newState.monopolyBuff.active ? newState.monopolyBuff.mult : 1;
-            totalGross *= activeMonopolyMult;
-            totalData *= activeMonopolyMult;
-
-            // Calculate Taxes
-            const profitBeforeTax = totalGross - totalUpkeep;
-            let effectiveTaxRate = 0;
-            
-            if (profitBeforeTax > 0) {
-                // Find highest applicable bracket
-                for (let i = TAX_BRACKETS.length - 1; i >= 0; i--) {
-                    if (profitBeforeTax >= TAX_BRACKETS[i].threshold) {
-                        effectiveTaxRate = TAX_BRACKETS[i].rate;
-                        break;
-                    }
-                }
-            }
-            
-            // Apply Evasion & Loopholes
-            const evasionDrop = calcEffect(newState.policyRegistry, newState.policies, 'tax_reduction', true) + calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'tax_reduction', true);
-            effectiveTaxRate = Math.max(0, effectiveTaxRate - evasionDrop);
-
-            const taxAmount = profitBeforeTax > 0 ? profitBeforeTax * effectiveTaxRate : 0;
-            const netCapitalRate = totalGross - totalUpkeep - taxAmount;
-
-            // BANKRUPTCY CHECK
-            const isBankrupt = newState.capital <= 0 && netCapitalRate < 0;
-            
-            if (isBankrupt) {
-                newState.capital = 0;
-                totalData = 0; // Servers shut off
-            }
-
-            // Apply Auto Clicks (Gross Generation, bypasses upkeep but hits taxes?) 
-            // For balance, auto clicks add to gross.
-            const autoClicks = calcEffect(newState.policyRegistry, newState.policies, 'auto_click', true);
-            let autoGain = 0;
-            if (autoClicks > 0 && !isBankrupt) {
-                const basePower = calcEffect(newState.policyRegistry, newState.policies, 'click_power', true);
-                const clickSynergy = calcEffect(newState.policyRegistry, newState.policies, 'click_synergy', true);
-                const eqBoost = applyDilation(calcEffect(newState.prestigeRegistry, newState.prestigeUpgrades, 'global_mult', false));
-                
-                autoGain = ((0.5 + basePower + (totalGross * clickSynergy)) * eqBoost * activeMonopolyMult) * autoClicks;
-                // Treat autogain as pure net for simplicity to help them out of holes
-            }
-
-            setFinances({
-                gross: totalGross, upkeep: totalUpkeep, profit: profitBeforeTax, 
-                taxRate: effectiveTaxRate, taxAmount, net: netCapitalRate, 
-                dataRate: totalData, isBankrupt, dilation: applyDilation(1e25) / 1e25 // Tracking sample dilation
-            });
-
-            const tickNet = netCapitalRate * deltaSec;
-            const tickAuto = autoGain * deltaSec;
-            const totalCapChange = tickNet + tickAuto;
-
-            if (!hasProcessedOffline.current) {
-                hasProcessedOffline.current = true;
-                if (deltaSec > 60 && (totalCapChange !== 0 || totalData > 0)) setOfflineReport({ time: deltaSec, capital: totalCapChange, data: totalData * deltaSec });
-            }
-
-            if (totalCapChange !== 0) { 
-                newState.capital = safeAdd(newState.capital, totalCapChange); 
-                if (newState.capital < 0) newState.capital = 0; // Hard floor
-                if (totalCapChange > 0) {
-                    newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, totalCapChange); 
-                    newState.runCapital = safeAdd(newState.runCapital, totalCapChange); 
-                }
-            }
-            if (totalData > 0 && !isBankrupt) newState.data = safeAdd(newState.data, totalData * deltaSec);
-
-            // Market Booms
-            if (!newState.marketBoom && Math.random() < (0.005 * deltaSec) && !isBankrupt) { 
-              const r = Math.random();
-              newState.marketBoom = { 
-                x: Math.floor(Math.random() * 80) + 10, y: Math.floor(Math.random() * 80) + 10, 
-                expiresAt: now + 15000, type: r > 0.90 && newState.data > 0 ? 'monopoly' : r > 0.65 && newState.data > 0 ? 'data' : 'cash' 
-              };
-            }
-            if (newState.marketBoom && now > newState.marketBoom.expiresAt) newState.marketBoom = null;
-
-            // AI Manager Auto-Buy (Only safe buys if not bankrupt)
-            if (newState.policies.aiManager > 0 && newState.settings.aiManagerOn && !isBankrupt && Math.random() < (0.5 * deltaSec)) {
-               const drift = newState.prestigeUpgrades.bailouts || 0;
-               let bestBuy = null;
-               Object.keys(newState.departmentRegistry).forEach(key => {
-                   const dep = newState.departmentRegistry[key];
-                   const count = newState.departments[key] || 0;
-                   const cost = calculateCost(dep.baseCost, dep.costMult, count, 1, drift);
-                   
-                   // Safety check: Don't let AI push upkeep above 80% of gross
-                   const testEval = evaluateDepartment(dep, count + 1, newState);
-                   const isSafe = (totalUpkeep + testEval.upkeep) < (totalGross * 0.8) || dep.type === 'data';
-
-                   if (newState.capital >= cost && isSafe) { 
-                       if (!bestBuy || cost > bestBuy.cost) bestBuy = { key, cost }; 
-                   }
-               });
-               if (bestBuy) {
-                   newState.capital -= bestBuy.cost;
-                   newState.departments[bestBuy.key] = (newState.departments[bestBuy.key] || 0) + 1;
-               }
-            }
-
-            if (now - lastSaveTime.current > 10000) {
-               localStorage.setItem(SAVE_KEY, JSON.stringify(newState));
-               lastSaveTime.current = now;
-            }
-
-            return newState;
-          });
-          animationFrameId = requestAnimationFrame(gameLoop);
-        };
-        animationFrameId = requestAnimationFrame(gameLoop);
-        return () => cancelAnimationFrame(animationFrameId);
-      }, [calcEffect, evaluateDepartment, preBoot, scolding]);
-
-      // --- ACTIONS ---
-      const handleManualClick = useCallback((cx, cy) => {
-        setGameState(prev => {
-          const activeMonopolyMult = prev.monopolyBuff.active ? prev.monopolyBuff.mult : 1;
-          const clickSynergy = calcEffect(prev.policyRegistry, prev.policies, 'click_synergy', true);
-          const basePower = calcEffect(prev.policyRegistry, prev.policies, 'click_power', true);
-          const eqBoost = applyDilation(calcEffect(prev.prestigeRegistry, prev.prestigeUpgrades, 'global_mult', false));
-          
-          let grossBase = 0;
-          Object.keys(prev.departmentRegistry).forEach(key => {
-              if (prev.departmentRegistry[key].type === 'capital') {
-                  grossBase += evaluateDepartment(prev.departmentRegistry[key], prev.departments[key] || 0, prev).gross;
-              }
-          });
-
-          // Clicks are raw un-taxed income bursts to help escape bankruptcy
-          const gain = (0.5 + basePower + (grossBase * clickSynergy)) * eqBoost * activeMonopolyMult;
-          
-          if (clickContainerRef.current && cx !== undefined && cy !== undefined) {
-            const rect = clickContainerRef.current.getBoundingClientRect();
-            addFloatingText(cx - rect.left, cy - rect.top, `+${formatCurrency(gain, prev.settings.notation)}`, 'emerald');
-          }
-          return { 
-              ...prev, 
-              capital: safeAdd(prev.capital, gain), 
-              lifetimeCapital: safeAdd(prev.lifetimeCapital, gain), 
-              runCapital: safeAdd(prev.runCapital, gain), 
-              stats: { ...prev.stats, totalClicks: prev.stats.totalClicks + 1 } 
-          };
-        });
-      }, [calcEffect, evaluateDepartment]);
-
-      const addFloatingText = (x, y, text, colorCode = 'emerald') => {
-        const id = Date.now() + Math.random();
-        setFloatingTexts(prev => [...prev, { id, x, y, text, colorCode }]);
-        setTimeout(() => setFloatingTexts(prev => prev.filter(ft => ft.id !== id)), 1000);
-      };
-
       const handleBoomClick = () => {
         setGameState(prev => {
           if (!prev.marketBoom) return prev;
           const type = prev.marketBoom.type;
           const newState = { ...prev, marketBoom: null, stats: { ...prev.stats, marketBooms: prev.stats.marketBooms + 1 } };
+          
+          let newFloatingTexts = [...prev.floatingTexts];
           if (type === 'cash') {
-            const reward = Math.max(50, finances.gross * 60 * 5); // 5 minutes of gross
-            addFloatingText(window.innerWidth/2, window.innerHeight/2, `+${formatCurrency(reward, prev.settings.notation)} Extraction!`, 'emerald');
+            const reward = Math.max(50, finances.gross * 60 * 5);
+            newFloatingTexts.push({ id: Date.now(), x: window.innerWidth/2, y: window.innerHeight/2, text: `+${formatCurrency(reward, prev.settings.notation)} Extraction!`, colorCode: 'emerald', expires: Date.now()+1500 });
             newState.capital = safeAdd(newState.capital, reward); 
             newState.lifetimeCapital = safeAdd(newState.lifetimeCapital, reward); 
             newState.runCapital = safeAdd(newState.runCapital, reward);
           } else if (type === 'data') {
             const reward = Math.max(5, finances.dataRate * 60 * 5);
-            addFloatingText(window.innerWidth/2, window.innerHeight/2, `+${formatNumber(reward, prev.settings.notation)} Data Breach!`, 'cyan');
+            newFloatingTexts.push({ id: Date.now(), x: window.innerWidth/2, y: window.innerHeight/2, text: `+${formatNumber(reward, prev.settings.notation)} Data Breach!`, colorCode: 'cyan', expires: Date.now()+1500 });
             newState.data = safeAdd(newState.data, reward);
           } else if (type === 'monopoly') {
-            addFloatingText(window.innerWidth/2, window.innerHeight/2, `x7 SYSTEM OVERRIDE!`, 'amber');
+            newFloatingTexts.push({ id: Date.now(), x: window.innerWidth/2, y: window.innerHeight/2, text: `x7 SYSTEM OVERRIDE!`, colorCode: 'amber', expires: Date.now()+1500 });
             newState.monopolyBuff = { active: true, expiresAt: Date.now() + 15000, mult: 7 };
           }
+          newState.floatingTexts = newFloatingTexts;
           return newState;
         });
       };
 
-      // --- PROCEDURAL INFINITE R&D ---
       const procStats = useMemo(() => ({
         deps: Object.keys(gameState.departmentRegistry).filter(k => k.startsWith('proc_')).length,
         pols: Object.keys(gameState.policyRegistry).filter(k => k.startsWith('proc_')).length,
@@ -763,8 +822,6 @@
       const getResearchCost = useCallback(() => {
         const aiReducSum = calcEffect(gameState.policyRegistry, gameState.policies, 'ai_cost_reduction', true) + calcEffect(gameState.prestigeRegistry, gameState.prestigeUpgrades, 'ai_cost_reduction', true);
         const discountMult = Math.max(0.01, 1 - aiReducSum); 
-        
-        // Procedural costs scale absurdly to enforce the 10-year wall
         if (gameState.researchFocus === 'department') return { type: 'data', amount: 50e9 * Math.pow(1000, procStats.deps) * discountMult };
         if (gameState.researchFocus === 'policy') return { type: 'data', amount: 150e9 * Math.pow(1000, procStats.pols) * discountMult };
         return { type: 'equity', amount: Math.floor(10 * Math.pow(10, procStats.pres)) };
@@ -774,12 +831,12 @@
         if (isResearching || !gameState.autoResearchEnabled) return;
         const cost = getResearchCost();
         if ((cost.type === 'data' && gameState.data < cost.amount) || (cost.type === 'equity' && gameState.equity < cost.amount)) return;
-
+        
         setIsResearching(true);
         setGameState(prev => ({ ...prev, data: cost.type === 'data' ? Math.max(0, prev.data - cost.amount) : prev.data, equity: cost.type === 'equity' ? Math.max(0, prev.equity - cost.amount) : prev.equity }));
-
+        
         await new Promise(resolve => setTimeout(resolve, 1500));
-
+        
         const prefixes = ["Global", "Synergistic", "Dynamic", "Apex", "Prime", "Quantum", "Vanguard", "Omni", "Hyper", "Neo", "Cosmic", "Stellar", "Astral", "Ethereal", "Hegemonic"];
         const id = `proc_${Date.now()}_${Math.floor(Math.random()*1000)}`;
         let newItem;
@@ -791,16 +848,16 @@
             desc: `Tier ${procStats.deps + 1} Artificial Construct.`, 
             baseCost: 100e24 * Math.pow(1e6, procStats.deps), 
             baseProd: 5e15 * Math.pow(1e4, procStats.deps),
-            baseUpkeep: isData ? 0 : 4e15 * Math.pow(1e4, procStats.deps), // 80% upkeep margin
+            baseUpkeep: isData ? 0 : 4e15 * Math.pow(1e4, procStats.deps),
             costMult: 1.85 + (Math.random() * 0.15), type: isData ? 'data' : 'capital', icon: isData ? 'Network' : 'Building'
           };
         } else if (gameState.researchFocus === 'policy') {
           const r = Math.random();
-          const eType = r > 0.6 ? 'tax_reduction' : r > 0.3 ? 'upkeep_reduction' : 'capital_mult';
+          const eType = r > 0.8 ? 'tax_reduction' : r > 0.6 ? 'upkeep_reduction' : r > 0.4 ? 'log_capacity' : r > 0.2 ? 'log_speed' : 'capital_mult';
           newItem = {
             id, name: `${prefixes[Math.floor(Math.random() * prefixes.length)]} Protocol`, desc: `Tier ${procStats.pols + 1} System Override.`, 
             baseCost: 500e24 * Math.pow(1e6, procStats.pols), costMult: 15 + Math.random() * 5,
-            effectType: eType, effectBase: eType === 'capital_mult' ? 1.0 * (procStats.pols + 1) : 0.01 // Soft 1% for reduction stats
+            effectType: eType, effectBase: (eType === 'capital_mult' || eType.startsWith('log_')) ? 1.0 * (procStats.pols + 1) : 0.01
           };
         } else {
           newItem = {
@@ -830,10 +887,8 @@
         return () => clearInterval(interval);
       }, [gameState.autoResearchEnabled, gameState.data, gameState.equity, getResearchCost, executeResearch, isResearching]);
 
-      // --- MODALS & HELPERS ---
-      
       const calculateBuyoutRewards = () => {
-        const baseReq = 1000000000 * Math.pow(10000, gameState.buyouts); // Massively harder scaling
+        const baseReq = 1000000000 * Math.pow(10000, gameState.buyouts);
         if (gameState.runCapital < baseReq) return 0;
         return Math.floor(Math.pow(gameState.runCapital / baseReq, 0.15)); 
       };
@@ -849,7 +904,7 @@
         setGameState(prev => ({
           ...prev, capital: 0, data: 0, runCapital: 0, buyouts: prev.buyouts + 1, equity: safeAdd(prev.equity, rewards), monopolyBuff: { active: false, expiresAt: 0, mult: 1 },
           departments: Object.keys(prev.departmentRegistry).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}),
-          policies: Object.keys(prev.policyRegistry).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), lastTick: Date.now()
+          policies: Object.keys(prev.policyRegistry).reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), lastTick: Date.now(), backlog: 0
         }));
         setModalState(null);
         showToast("Hostile Takeover Complete.");
@@ -863,7 +918,6 @@
       const nota = gameState.settings.notation;
       const rankInfo = getRankInfo(gameState.lifetimeCapital);
       
-      // Get derived department states for UI
       const uiDeps = useMemo(() => {
           return Object.entries(gameState.departmentRegistry).map(([key, dep]) => {
               const count = gameState.departments[key] || 0;
@@ -872,26 +926,22 @@
               const amountToBuy = gameState.buyMultiplier === -1 ? maxBuy : gameState.buyMultiplier;
               const cost = calculateCost(dep.baseCost, dep.costMult, count, Math.max(1, amountToBuy), drift);
               const canAfford = gameState.capital >= cost && (gameState.buyMultiplier !== -1 || maxBuy > 0);
-              
               const currentEval = evaluateDepartment(dep, count, gameState);
               const nextEval = evaluateDepartment(dep, count + Math.max(1, amountToBuy), gameState);
-              
               const addedGross = nextEval.gross - currentEval.gross;
               const addedUpkeep = nextEval.upkeep - currentEval.upkeep;
               const addedData = nextEval.data - currentEval.data;
-
               return { key, dep, count, cost, canAfford, currentEval, addedGross, addedUpkeep, addedData };
           });
       }, [gameState, evaluateDepartment]);
 
-
       if (preBoot) {
         return (
           <div className="w-full h-screen fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center cursor-pointer overflow-hidden" onClick={initiateConnection}>
-             <div className="text-emerald-500 font-mono text-sm sm:text-lg animate-pulse tracking-widest text-center px-4 relative z-10 bg-black/60 p-4 rounded-xl border border-emerald-900/50 backdrop-blur-md">
-               [ INITIATE AXIOM ENGINE v1.0 ]
+             <div className="text-emerald-500 font-mono text-sm sm:text-lg animate-pulse tracking-widest text-center px-6 relative z-10 bg-black/60 py-6 rounded-xl border border-emerald-900/50 backdrop-blur-md shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+               [ INITIATE AXIOM ENGINE v0.7.1a ]
              </div>
-             <div className="text-[10px] sm:text-xs text-red-500 font-mono mt-8 opacity-80 text-center px-4 max-w-md relative z-10 bg-black/50 p-2 rounded tracking-wider">
+             <div className="text-[10px] sm:text-xs text-red-500 font-mono mt-8 opacity-80 text-center px-4 max-w-md relative z-10 bg-black/50 p-2 rounded tracking-wider border border-red-900/30">
                WARNING: By clicking, you initialize the local Hegemony loop. Tax liabilities apply.
              </div>
           </div>
@@ -901,21 +951,26 @@
       return (
         <div className={`h-full w-full flex flex-col font-sans selection:bg-emerald-500/30 overflow-hidden relative ${finances.isBankrupt ? 'bankrupt-pulse' : ''}`}>
           
-          {/* BANKRUPT BANNER */}
+          {/* HARDWARE TICKER */}
+          <div className="ticker-container w-full">
+            <div className="px-4 h-full flex items-center border-r border-emerald-900 bg-[#020202] z-20 shrink-0 font-black tracking-widest shadow-[5px_0_15px_rgba(0,0,0,0.8)]">SYNDICATE_LINK</div>
+            <div className="ticker-scroll">
+              YEAR: {calendar.year} // DAY: {calendar.dayOfYear} [{String(calendar.hours).padStart(2, '0')}:{String(calendar.minutes).padStart(2, '0')}:{String(calendar.seconds).padStart(2, '0')}] — STATUS: {finances.isStalled ? <span className="latency-warning">LATENCY_STALL_WARNING (-50% OUTPUT)</span> : "NOMINAL"} — LOGS: {formatNumber(gameState.backlog)}/{formatNumber(finances.logCap)} — HYPE: {(finances.hypeBoost * 100).toFixed(0)}% — {LORE_MESSAGES.slice().reverse().find(l => l.req(gameState))?.text || LORE_MESSAGES[0].text}
+            </div>
+          </div>
+
           {finances.isBankrupt && (
-              <div className="w-full bg-red-900 text-white font-black uppercase tracking-widest text-center py-1 text-xs z-[200] animate-pulse">
+              <div className="w-full bg-red-900 text-white font-black uppercase tracking-widest text-center py-1.5 text-[10px] lg:text-xs z-[200] animate-pulse border-b border-red-500 shadow-[0_5px_20px_rgba(239,68,68,0.4)]">
                  CRITICAL ALERT: BANKRUPTCY DECLARED. AUTO-SYSTEMS HALTED. MANUAL EXTRACTION REQUIRED.
               </div>
           )}
 
-          {/* BOOM MODAL */}
           {gameState.marketBoom && (
-             <button onClick={handleBoomClick} className="absolute z-50 text-4xl drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] animate-bounce cursor-pointer" style={{ left: `${gameState.marketBoom.x}%`, top: `${gameState.marketBoom.y}%` }}>
+             <button onClick={handleBoomClick} className="absolute z-50 text-4xl lg:text-5xl drop-shadow-[0_0_25px_rgba(255,255,255,0.9)] animate-bounce cursor-pointer transition-transform hover:scale-110" style={{ left: `${gameState.marketBoom.x}%`, top: `${gameState.marketBoom.y}%` }}>
                {gameState.marketBoom.type === 'cash' ? <i className="fa-solid fa-money-bill-wave text-emerald-400"></i> : gameState.marketBoom.type === 'data' ? <i className="fa-solid fa-database text-cyan-400"></i> : <i className="fa-solid fa-chart-line text-amber-400"></i>}
              </button>
           )}
 
-          {/* OFFLINE MODAL */}
           {offlineReport && (
             <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
               <div className="glass-panel border-emerald-500/50 rounded-2xl p-6 lg:p-8 max-w-md w-full shadow-[0_0_50px_rgba(16,185,129,0.2)] modal-animate relative overflow-hidden">
@@ -924,8 +979,8 @@
                 <p className="text-slate-400 text-sm text-center mb-6">Extraction protocols executed automatically for {formatNumber(offlineReport.time / 3600)} hours.</p>
                 <div className="space-y-4 mb-8">
                   {offlineReport.capital !== 0 && (
-                    <div className={`bg-[#0a0f16]/80 border p-4 rounded-xl flex items-center gap-4 ${offlineReport.capital < 0 ? 'border-red-900/50' : 'border-emerald-900/50'}`}>
-                      <div className={`bg-black/50 p-3 rounded-lg ${offlineReport.capital < 0 ? 'text-red-400' : 'text-emerald-400'}`}><i className="fa-solid fa-coins text-2xl"></i></div>
+                    <div className={`bg-[#0a0f16]/80 border p-4 rounded-xl flex items-center gap-4 ${offlineReport.capital < 0 ? 'border-red-900/50 shadow-[inset_0_0_15px_rgba(239,68,68,0.1)]' : 'border-emerald-900/50 shadow-[inset_0_0_15px_rgba(16,185,129,0.1)]'}`}>
+                      <div className={`bg-black/50 p-3 rounded-lg ${offlineReport.capital < 0 ? 'text-red-400 border border-red-900/50' : 'text-emerald-400 border border-emerald-900/50'}`}><i className="fa-solid fa-coins text-2xl"></i></div>
                       <div>
                         <div className="text-xs text-slate-400 uppercase tracking-widest font-bold">Net Capital Delta</div>
                         <div className={`text-xl font-mono font-bold ${offlineReport.capital < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(offlineReport.capital, nota)}</div>
@@ -933,8 +988,8 @@
                     </div>
                   )}
                   {offlineReport.data > 0 && (
-                    <div className="bg-[#0a0f16]/80 border border-cyan-900/50 p-4 rounded-xl flex items-center gap-4">
-                      <div className="bg-cyan-950/50 p-3 rounded-lg text-cyan-400"><i className="fa-solid fa-database text-2xl"></i></div>
+                    <div className="bg-[#0a0f16]/80 border border-cyan-900/50 p-4 rounded-xl flex items-center gap-4 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]">
+                      <div className="bg-black/50 border border-cyan-900/50 p-3 rounded-lg text-cyan-400"><i className="fa-solid fa-database text-2xl"></i></div>
                       <div>
                         <div className="text-xs text-slate-400 uppercase tracking-widest font-bold">Data Harvested</div>
                         <div className="text-xl font-mono font-bold text-cyan-400">{formatNumber(offlineReport.data, nota)}</div>
@@ -949,28 +1004,27 @@
             </div>
           )}
 
-          {/* ACTION MODALS */}
           {modalState && (
-            <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-              <div className="glass-panel border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl modal-animate relative bg-[#0a0f16]/90">
+            <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-panel border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-[0_20px_50px_rgba(0,0,0,0.9)] modal-animate relative bg-[#0a0f16]">
                 {modalState.type === 'buyout' && (
                   <>
                     <h2 className="text-xl font-black text-amber-400 mb-2 flex items-center gap-2 uppercase tracking-widest"><i className="fa-solid fa-sync"></i> Hostile Takeover</h2>
-                    <p className="text-sm text-slate-300 mb-4">You will liquidate all physical assets to acquire <strong className="text-amber-400">{formatNumber(calculateBuyoutRewards(), nota)} Equity</strong>.</p>
-                    <p className="text-xs text-slate-400 mb-6 font-mono">Requirement for next point: {formatCurrency(getNextBuyoutReq(), nota)}</p>
+                    <p className="text-sm text-slate-300 mb-4 leading-relaxed">You will liquidate all physical assets and capital to acquire <strong className="text-amber-400 drop-shadow-[0_0_5px_currentColor]">{formatNumber(calculateBuyoutRewards(), nota)} Equity</strong>.</p>
+                    <p className="text-xs text-slate-400 mb-6 font-mono border-l-2 border-amber-900 pl-2">Req for next point: {formatCurrency(getNextBuyoutReq(), nota)}</p>
                     <div className="flex gap-3">
-                      <button onClick={()=>setModalState(null)} className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors">Cancel</button>
-                      <button onClick={confirmBuyout} className="flex-1 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-black font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-colors">Confirm</button>
+                      <button onClick={()=>setModalState(null)} className="flex-1 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors">Cancel</button>
+                      <button onClick={confirmBuyout} className="flex-1 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-black font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all transform hover:scale-105">Confirm</button>
                     </div>
                   </>
                 )}
                 {modalState.type === 'wipe' && (
                   <>
-                    <h2 className="text-xl font-black text-red-500 mb-2 flex items-center gap-2 uppercase tracking-widest"><i className="fa-solid fa-skull"></i> Purge Save Data</h2>
-                    <p className="text-sm text-slate-300 mb-6">This will wipe your game save completely. You will lose all extracted data and Equity permanently.</p>
+                    <h2 className="text-xl font-black text-red-500 mb-2 flex items-center gap-2 uppercase tracking-widest"><i className="fa-solid fa-skull"></i> Purge Memory</h2>
+                    <p className="text-sm text-slate-300 mb-6">This will wipe your Hegemony data completely. You will lose all extracted Capital, Data, and Equity permanently.</p>
                     <div className="flex gap-3">
-                      <button onClick={()=>setModalState(null)} className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors">Cancel</button>
-                      <button onClick={confirmWipe} className="flex-1 py-2 rounded-lg bg-red-900 hover:bg-red-800 text-white font-bold uppercase tracking-widest transition-colors border border-red-500">Purge</button>
+                      <button onClick={()=>setModalState(null)} className="flex-1 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors">Cancel</button>
+                      <button onClick={confirmWipe} className="flex-1 py-2.5 rounded-lg bg-red-900 hover:bg-red-800 text-white font-bold uppercase tracking-widest transition-colors border border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]">Purge</button>
                     </div>
                   </>
                 )}
@@ -978,55 +1032,57 @@
             </div>
           )}
 
-          {/* TOAST */}
-          <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[110] glass-panel border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-full font-mono text-xs lg:text-sm transition-all duration-500 flex items-center gap-2 shadow-[0_5px_20px_rgba(0,0,0,0.5)] ${saveNotice ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+          <div className={`fixed top-14 left-1/2 -translate-x-1/2 z-[110] glass-panel border-emerald-500/50 text-emerald-400 px-5 py-2 rounded-full font-mono text-xs lg:text-sm transition-all duration-500 flex items-center gap-3 shadow-[0_5px_20px_rgba(0,0,0,0.8)] ${saveNotice ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
             <i className="fa-solid fa-info-circle"></i> {saveNotice}
           </div>
 
-          {/* HEADER */}
+          {/* MAIN HEADER */}
           <header className="h-auto shrink-0 glass-panel border-b border-emerald-700/50 px-3 py-3 lg:px-6 lg:py-0 lg:h-[80px] flex flex-col lg:flex-row items-center justify-between z-50 relative gap-3 bg-[#0a0f16]/80">
             <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
               <div className="flex items-center gap-3 cursor-pointer">
-                 <div className="w-12 h-12 bg-black border border-emerald-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] rounded">
+                 <div className="w-12 h-12 bg-black border border-emerald-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] rounded-lg">
                    <i className="fa-solid fa-server text-2xl text-emerald-400"></i>
                  </div>
                  <div className="flex flex-col">
                    <span className="font-black text-sm lg:text-xl tracking-widest uppercase leading-none text-white glitch-hover">Axiom Syndicate</span>
-                   <div className="flex items-center gap-1 mt-1">
-                     <span className="text-[9px] lg:text-[10px] text-emerald-400 tracking-widest font-mono uppercase font-bold">Infinite Hegemony v1.0</span>
+                   <div className="flex items-center gap-1 mt-1.5">
+                     <span className="text-[9px] lg:text-[10px] text-emerald-400 tracking-widest font-mono uppercase font-bold">Infinite Hegemony v0.7.1a</span>
                    </div>
                  </div>
               </div>
 
               <div className="lg:hidden flex gap-2">
-                <button onClick={() => setGameState(p => ({ ...p, buyMultiplier: [1, 10, 100, -1][([1, 10, 100, -1].indexOf(p.buyMultiplier) + 1) % 4] }))} className="h-8 px-3 bg-[#101820]/70 text-emerald-400 rounded border border-emerald-700/50 text-xs font-mono font-bold">
+                <button onClick={() => setGameState(p => ({ ...p, buyMultiplier: [1, 10, 100, -1][([1, 10, 100, -1].indexOf(p.buyMultiplier) + 1) % 4] }))} className="h-9 px-3 bg-[#101820]/70 text-emerald-400 rounded-lg border border-emerald-700/50 text-xs font-mono font-bold shadow-[inset_0_0_8px_rgba(16,185,129,0.1)]">
                   Buy: {gameState.buyMultiplier === -1 ? 'MAX' : `x${gameState.buyMultiplier}`}
+                </button>
+                <button onClick={() => { setMobileTab('strategy'); setStrategyTab('settings'); }} className="h-9 w-9 bg-[#101820]/70 text-emerald-400 rounded-lg border border-emerald-700/50 flex items-center justify-center shadow-[inset_0_0_8px_rgba(16,185,129,0.1)]" title="Settings">
+                  <i className="fa-solid fa-cog"></i>
                 </button>
               </div>
             </div>
             
-            <div className="flex items-center gap-4 lg:gap-8 w-full lg:w-auto overflow-x-auto no-scrollbar justify-center lg:justify-end pb-1 lg:pb-0">
-              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/70 p-2 rounded border border-emerald-700/30">
+            <div className="flex items-center gap-3 lg:gap-6 w-full lg:w-auto overflow-x-auto no-scrollbar justify-center lg:justify-end pb-1 lg:pb-0">
+              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/80 px-4 py-2 rounded-lg border border-emerald-700/30 shadow-[inset_0_0_15px_rgba(16,185,129,0.05)]">
                 <div className="flex items-center gap-1.5 text-emerald-400 mb-0.5">
-                  <i className="fa-solid fa-coins text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-emerald-300">Capital</span>
+                  <i className="fa-solid fa-coins text-[10px]"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-emerald-300">Capital</span>
                 </div>
                 <div className={`text-lg lg:text-2xl font-black font-mono tracking-tighter leading-none ${finances.isBankrupt ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'text-white drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`}>
                   {formatCurrency(gameState.capital, nota)}
                 </div>
               </div>
 
-              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/70 p-2 rounded border border-cyan-700/30">
+              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/80 px-4 py-2 rounded-lg border border-cyan-700/30 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]">
                 <div className="flex items-center gap-1.5 text-cyan-400 mb-0.5">
-                  <i className="fa-solid fa-database text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-cyan-300">User Data</span>
+                  <i className="fa-solid fa-database text-[10px]"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-cyan-300">User Data</span>
                 </div>
                 <div className="text-lg lg:text-2xl font-black text-white font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(6,182,212,0.5)] leading-none">
                   {formatNumber(gameState.data, nota)}
                 </div>
               </div>
 
-              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/70 p-2 rounded border border-amber-700/30">
+              <div className="flex flex-col shrink-0 items-center lg:items-start bg-[#101820]/80 px-4 py-2 rounded-lg border border-amber-700/30 shadow-[inset_0_0_15px_rgba(245,158,11,0.05)]">
                 <div className="flex items-center gap-1.5 text-amber-400 mb-0.5">
-                  <i className="fa-solid fa-shield-alt text-xs"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-amber-300">Equity</span>
+                  <i className="fa-solid fa-shield-alt text-[10px]"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-amber-300">Equity</span>
                 </div>
                 <div className="text-lg lg:text-2xl font-black text-white font-mono tracking-tighter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] leading-none">
                   {formatNumber(gameState.equity, nota)}
@@ -1035,73 +1091,76 @@
             </div>
 
             <div className="hidden lg:flex items-center gap-3 shrink-0 ml-4">
+              <button onClick={toggleFullscreen} className={`h-10 w-10 flex items-center justify-center rounded-lg text-sm transition-colors border bg-black/50 text-slate-400 border-emerald-900/30 hover:text-emerald-400`} title="Toggle Fullscreen">
+                <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`}></i>
+              </button>
               {gameState.policies.aiManager > 0 && (
                 <button 
                   onClick={() => setGameState(p => ({ ...p, settings: { ...p.settings, aiManagerOn: !p.settings.aiManagerOn } }))} 
-                  className={`h-10 px-3 rounded text-sm font-bold font-mono transition-colors flex items-center gap-2 border ${gameState.settings.aiManagerOn ? 'bg-emerald-900/40 text-emerald-400 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-black/50 text-slate-400 border-emerald-900/30'}`}
+                  className={`h-10 px-4 rounded-lg text-sm font-bold font-mono transition-all flex items-center gap-2 border ${gameState.settings.aiManagerOn ? 'bg-emerald-900/40 text-emerald-400 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-black/50 text-slate-400 border-emerald-900/30 hover:text-white'}`}
                 >
                   <i className="fa-solid fa-robot"></i> {gameState.settings.aiManagerOn ? 'AI: ON' : 'AI: OFF'}
                 </button>
               )}
-              <button onClick={() => setGameState(p => ({ ...p, buyMultiplier: [1, 10, 100, -1][([1, 10, 100, -1].indexOf(p.buyMultiplier) + 1) % 4] }))} className="h-10 px-4 bg-[#101820]/80 hover:bg-[#15202b] text-emerald-400 rounded font-mono text-sm font-bold border border-emerald-700/50 transition-colors flex items-center gap-2">
-                <i className="fa-solid fa-cog"></i> Buy: {gameState.buyMultiplier === -1 ? 'MAX' : `x${gameState.buyMultiplier}`}
+              <button onClick={() => setGameState(p => ({ ...p, buyMultiplier: [1, 10, 100, -1][([1, 10, 100, -1].indexOf(p.buyMultiplier) + 1) % 4] }))} className="h-10 px-5 bg-[#101820]/80 hover:bg-[#15202b] text-emerald-400 rounded-lg font-mono text-sm font-bold border border-emerald-700/50 transition-colors flex items-center gap-2 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]">
+                <i className="fa-solid fa-boxes-stacked"></i> Buy: {gameState.buyMultiplier === -1 ? 'MAX' : `x${gameState.buyMultiplier}`}
+              </button>
+              <button onClick={() => { setMobileTab('strategy'); setStrategyTab('settings'); }} className="h-10 w-10 bg-[#101820]/80 hover:bg-[#15202b] text-emerald-400 rounded-lg font-mono text-sm font-bold border border-emerald-700/50 transition-colors flex items-center justify-center shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]" title="Settings">
+                <i className="fa-solid fa-cog"></i>
               </button>
             </div>
           </header>
-          
-          {/* LORE TERMINAL UI */}
-          <div className="w-full bg-[#0a0f16]/90 border-b border-emerald-700/50 p-2 flex items-center gap-3 overflow-hidden shrink-0 z-40 backdrop-blur-sm">
-             <i className="fa-solid fa-terminal text-emerald-500 text-xs animate-pulse pl-2"></i>
-             <div className="text-[10px] text-emerald-400 font-mono whitespace-nowrap overflow-hidden text-ellipsis flex-1">
-                 > {LORE_MESSAGES.slice().reverse().find(l => l.req(gameState))?.text || LORE_MESSAGES[0].text}
-             </div>
-          </div>
 
-          {/* MAIN CONTENT AREA */}
           <main className="flex-1 flex flex-col lg:flex-row min-h-0 w-full max-w-[1600px] mx-auto p-0 lg:p-6 lg:gap-6 relative z-10">
             
             {/* HOLDINGS PANEL */}
-            <section className={`flex-1 lg:flex-[0_0_400px] flex flex-col min-h-0 glass-panel lg:rounded-xl overflow-hidden border-t lg:border border-emerald-700/30 bg-[#0a0f16]/90 shadow-2xl ${mobileTab === 'holdings' ? 'flex' : 'hidden lg:flex'}`}>
-              <div className="p-3 lg:p-4 border-b border-emerald-700/50 bg-[#101820]/80 shrink-0">
-                <div className="flex items-center gap-2">
-                  <i className="fa-solid fa-building text-lg lg:text-xl text-emerald-500"></i>
-                  <h2 className="text-base lg:text-lg font-black text-white uppercase tracking-widest">Holdings</h2>
+            <section className={`flex-1 lg:flex-[0_0_420px] flex flex-col min-h-0 glass-panel lg:rounded-2xl overflow-hidden border-t lg:border border-emerald-700/30 bg-[#0a0f16]/90 shadow-2xl ${mobileTab === 'holdings' ? 'flex' : 'hidden lg:flex'}`}>
+              <div className="p-4 border-b border-emerald-700/50 bg-[#0d131a] shrink-0 cyber-panel-border">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-900/30 p-2 rounded border border-emerald-700/50 text-emerald-400 shadow-[inset_0_0_8px_rgba(16,185,129,0.3)]">
+                    <i className="fa-solid fa-building text-lg"></i>
+                  </div>
+                  <div>
+                    <h2 className="text-base lg:text-lg font-black text-white uppercase tracking-widest leading-tight">Holdings</h2>
+                    <p className="text-[10px] text-emerald-500 font-mono">Acquire assets. Manage upkeep margins.</p>
+                  </div>
                 </div>
-                <p className="text-[9px] lg:text-[10px] text-emerald-400 font-mono mt-1">Acquire assets. Manage upkeep margins.</p>
               </div>
               
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3 relative pb-20 lg:pb-3">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 lg:p-4 space-y-3 relative pb-20 lg:pb-4">
                 {uiDeps.map(({ key, dep, count, cost, canAfford, currentEval, addedGross, addedUpkeep, addedData }) => {
                   const isData = dep.type === 'data';
                   const tColor = isData ? 'cyan' : 'emerald';
-                  
                   const mBoost = getMilestoneBoost(count), nMilestone = getNextMilestone(count);
                   const pMilestone = MILESTONE_THRESHOLDS[MILESTONE_THRESHOLDS.indexOf(nMilestone) - 1] || 0;
                   const pct = nMilestone ? ((count - pMilestone) / (nMilestone - pMilestone)) * 100 : 100;
 
                   return (
-                    <div key={key} className={`bg-[#101820]/70 border ${canAfford ? `border-${tColor}-700/50` : 'border-white/5 opacity-80'} rounded p-3 relative overflow-hidden group flex flex-col`}>
+                    <div key={key} className={`bg-[#0d131a] border ${canAfford ? `border-${tColor}-700/50` : 'border-white/5 opacity-80'} rounded-xl p-3 lg:p-4 relative overflow-hidden group flex flex-col shadow-[0_4px_15px_rgba(0,0,0,0.5)]`}>
                       <div className={`absolute bottom-0 left-0 h-1 bg-${tColor}-500/40 transition-all duration-300`} style={{width: `${pct}%`}}></div>
                       
-                      <div className="flex justify-between items-start mb-2 relative z-10">
-                        <div className="flex gap-2 lg:gap-3">
-                          <div className={`shrink-0 flex items-center justify-center w-10 h-10 bg-black border border-${tColor}-500/40 text-${tColor}-400 rounded relative shadow-[inset_0_0_10px_rgba(var(--tw-colors-${tColor}-500),0.3)]`}>
-                            <i className={`${ICON_MAP[dep.icon]} text-lg`}></i>
-                            {mBoost > 1 && <span className={`absolute -top-2 -right-2 bg-${tColor}-900 text-${tColor}-300 text-[9px] font-bold px-1 rounded border border-${tColor}-400`}>x{mBoost}</span>}
+                      <div className="flex justify-between items-start mb-3 relative z-10">
+                        <div className="flex gap-3">
+                          <div className={`shrink-0 flex items-center justify-center w-11 h-11 bg-black border border-${tColor}-500/40 text-${tColor}-400 rounded-lg relative shadow-[inset_0_0_15px_rgba(var(--tw-colors-${tColor}-500),0.2)]`}>
+                            <i className={`${ICON_MAP[dep.icon]} text-xl`}></i>
+                            {mBoost > 1 && <span className={`absolute -top-2.5 -right-2.5 bg-${tColor}-900 text-${tColor}-100 text-[9px] font-black px-1.5 py-0.5 rounded border border-${tColor}-400 shadow-[0_0_8px_rgba(var(--tw-colors-${tColor}-500),0.5)]`}>x{mBoost}</span>}
                           </div>
-                          <div className="min-w-0">
-                            <h3 className="font-bold text-slate-100 text-xs lg:text-sm truncate uppercase tracking-wider">{dep.name}</h3>
-                            <div className="text-[9px] lg:text-[10px] font-mono text-slate-400">
+                          <div className="min-w-0 flex flex-col justify-center">
+                            <h3 className="font-bold text-slate-100 text-sm truncate uppercase tracking-wider leading-tight mb-1">{dep.name}</h3>
+                            <div className="text-[10px] font-mono text-slate-400">
                                {isData ? (
-                                   <span>Prod: {formatNumber(currentEval.data, nota)}/s</span>
+                                   <span>Prod: <strong className="text-cyan-400">{formatNumber(currentEval.data, nota)}/s</strong></span>
                                ) : (
-                                   <span>Gross: {formatCurrency(currentEval.gross, nota)}/s | Upk: <span className="text-red-400">-{formatCurrency(currentEval.upkeep, nota)}/s</span></span>
+                                   <div className="flex flex-col gap-0.5">
+                                      <span>Gross: <strong className="text-emerald-400">{formatCurrency(currentEval.gross, nota)}/s</strong></span>
+                                      <span>Upkeep: <strong className="text-red-400">-{formatCurrency(currentEval.upkeep, nota)}/s</strong></span>
+                                   </div>
                                )}
                             </div>
                           </div>
                         </div>
                         <div className="text-right shrink-0 ml-2">
-                          <div className="text-xl font-black font-mono text-white tracking-tighter">{count}</div>
+                          <div className="text-2xl font-black font-mono text-white tracking-tighter opacity-90">{count}</div>
                         </div>
                       </div>
 
@@ -1112,13 +1171,16 @@
                         onPointerCancel={endHoldBuy}
                         onContextMenu={(e)=>e.preventDefault()}
                         disabled={!canAfford}
-                        className={`hold-btn w-full py-2 px-3 rounded font-mono font-bold text-xs flex justify-between items-center transition-colors border mt-auto relative z-10
-                          ${canAfford ? `bg-${tColor}-900/40 hover:bg-${tColor}-900/60 text-${tColor}-300 border-${tColor}-500/60 shadow-[0_0_15px_rgba(var(--tw-colors-${tColor}-500),0.2)]` : 'bg-black/50 text-slate-500 border-white/5'}`}
+                        className={`hold-btn w-full py-2.5 px-3 rounded-lg font-mono font-bold text-xs flex justify-between items-center transition-all border mt-auto relative z-10
+                          ${canAfford ? `bg-${tColor}-900/30 hover:bg-${tColor}-900/50 text-${tColor}-300 border-${tColor}-500/50 shadow-[0_0_15px_rgba(var(--tw-colors-${tColor}-500),0.15)]` : 'bg-black/50 text-slate-500 border-white/10'}`}
                       >
-                        <span className="flex items-center gap-1">Buy: {formatCurrency(cost, nota)}</span>
-                        <span className={`text-[9px] opacity-90 ${isData ? 'text-cyan-400' : 'text-emerald-400'}`}>
-                          {isData ? `+${formatNumber(addedData, nota)}/s` : `G: +${formatNumber(addedGross, nota)} | U: -${formatNumber(addedUpkeep, nota)}`}
-                        </span>
+                        <span className="flex items-center gap-1.5 uppercase tracking-widest"><i className="fa-solid fa-cart-plus"></i> Buy</span>
+                        <div className="text-right">
+                          <div className="text-white">{formatCurrency(cost, nota)}</div>
+                          <div className={`text-[9px] opacity-80 ${isData ? 'text-cyan-400' : 'text-emerald-400'} font-normal`}>
+                            {isData ? `+${formatNumber(addedData, nota)}/s` : `G:+${formatNumber(addedGross, nota)} U:-${formatNumber(addedUpkeep, nota)}`}
+                          </div>
+                        </div>
                       </button>
                     </div>
                   );
@@ -1126,48 +1188,48 @@
 
                 {/* R&D Section */}
                 {gameState.data > 0 && (
-                  <div className="mt-4 border border-cyan-700/50 rounded p-3 bg-[#101820]/80 relative overflow-hidden group">
-                    <div className="flex justify-between items-center mb-2 relative z-10">
+                  <div className="mt-4 border border-cyan-700/50 rounded-xl p-4 bg-[#0d131a] relative overflow-hidden group shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                    <div className="flex justify-between items-center mb-3 relative z-10">
                       <div className="flex items-center gap-2">
-                        <i className={`fa-solid fa-network-wired text-base ${gameState.autoResearchEnabled ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`}></i>
-                        <h3 className="font-bold text-slate-100 text-xs uppercase tracking-widest">Procedural R&D</h3>
+                        <i className={`fa-solid fa-network-wired text-lg ${gameState.autoResearchEnabled ? 'text-cyan-400 animate-pulse' : 'text-slate-500'}`}></i>
+                        <h3 className="font-bold text-slate-100 text-sm uppercase tracking-widest">Procedural R&D</h3>
                       </div>
-                      <button onClick={() => setGameState(p=>({...p, autoResearchEnabled: !p.autoResearchEnabled}))} className={`px-2 py-1 rounded text-[9px] font-mono font-bold flex items-center gap-1 border ${gameState.autoResearchEnabled ? 'bg-cyan-900/60 text-cyan-300 border-cyan-400' : 'bg-black text-slate-500 border-slate-700'}`}>
-                        {gameState.autoResearchEnabled ? 'ON' : 'OFF'}
+                      <button onClick={() => setGameState(p=>({...p, autoResearchEnabled: !p.autoResearchEnabled}))} className={`px-2.5 py-1 rounded-[4px] text-[10px] font-mono font-bold flex items-center gap-1 border transition-colors ${gameState.autoResearchEnabled ? 'bg-cyan-900/60 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'bg-black text-slate-500 border-slate-700 hover:text-slate-300'}`}>
+                        {gameState.autoResearchEnabled ? 'ACTIVE' : 'HALTED'}
                       </button>
                     </div>
                     
-                    <div className="flex justify-between text-[9px] font-mono mb-1 text-slate-300">
-                      <span>Cost: {formatNumber(getResearchCost().amount, nota)} {getResearchCost().type}</span>
-                      <button onClick={() => setGameState(p=>({...p, researchFocus: ['department', 'policy', 'prestige'][['department', 'policy', 'prestige'].indexOf(p.researchFocus)+1 % 3]}))} className="text-cyan-400 underline uppercase hover:text-cyan-300">Focus: {gameState.researchFocus}</button>
+                    <div className="flex justify-between text-[10px] font-mono mb-2 text-slate-300 bg-black/40 px-2 py-1.5 rounded">
+                      <span>Cost: <strong className="text-white">{formatNumber(getResearchCost().amount, nota)} {getResearchCost().type.toUpperCase()}</strong></span>
+                      <button onClick={() => setGameState(p=>({...p, researchFocus: ['department', 'policy', 'prestige'][['department', 'policy', 'prestige'].indexOf(p.researchFocus)+1 % 3]}))} className="text-cyan-400 hover:text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i className="fa-solid fa-crosshairs"></i> {gameState.researchFocus}</button>
                     </div>
                     
-                    <div className="w-full bg-black border border-slate-700 rounded-full h-1.5 overflow-hidden mb-2">
-                      <div className={`h-full rounded-full transition-all duration-300 ${isResearching ? 'bg-cyan-400 w-full animate-pulse' : 'bg-cyan-600'}`} style={{width: isResearching ? '100%' : `${Math.min(100, ((getResearchCost().type==='equity'?gameState.equity:gameState.data)/getResearchCost().amount)*100)}%`}}></div>
+                    <div className="w-full bg-black border border-slate-800 rounded-full h-2 overflow-hidden mb-1">
+                      <div className={`h-full rounded-full transition-all duration-300 ${isResearching ? 'bg-cyan-400 w-full animate-pulse shadow-[0_0_10px_rgba(6,182,212,0.8)]' : 'bg-cyan-700'}`} style={{width: isResearching ? '100%' : `${Math.min(100, ((getResearchCost().type==='equity'?gameState.equity:gameState.data)/getResearchCost().amount)*100)}%`}}></div>
                     </div>
                   </div>
                 )}
               </div>
             </section>
 
-            {/* EXECUTIVE DESK PANEL */}
-            <section className={`flex-[2] flex flex-col min-h-0 lg:gap-6 ${mobileTab === 'desk' ? 'flex' : 'hidden lg:flex'}`}>
+            {/* CENTRAL EXECUTIVE PANEL */}
+            <section className={`flex-[1.8] flex flex-col min-h-0 lg:gap-6 ${mobileTab === 'desk' ? 'flex' : 'hidden lg:flex'}`}>
               
-              <div className="glass-panel lg:rounded-xl p-4 lg:p-6 shrink-0 relative overflow-hidden border-b lg:border border-emerald-700/50 bg-[#0a0f16]/90 lg:shadow-2xl">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="flex justify-between items-end mb-2 relative z-10">
+              <div className="glass-panel lg:rounded-2xl p-4 lg:p-6 shrink-0 relative overflow-hidden border-b lg:border border-emerald-700/50 bg-[#0a0f16]/90 lg:shadow-2xl">
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+                <div className="flex justify-between items-end mb-3 relative z-10">
                   <div>
-                    <div className="text-[9px] lg:text-[10px] text-emerald-400 font-mono tracking-widest uppercase mb-1 flex items-center gap-1"><i className="fa-solid fa-star"></i> Classification</div>
-                    <div className="text-xl lg:text-2xl font-black text-white uppercase tracking-widest">{rankInfo.current.name}</div>
+                    <div className="text-[10px] text-emerald-500 font-mono tracking-widest uppercase mb-1 flex items-center gap-1.5"><i className="fa-solid fa-star"></i> Corporate Classification</div>
+                    <div className="text-xl lg:text-3xl font-black text-white uppercase tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{rankInfo.current.name}</div>
                   </div>
-                  {rankInfo.next && <div className="text-[10px] lg:text-xs font-mono text-emerald-300">{rankInfo.progress.toFixed(1)}%</div>}
+                  {rankInfo.next && <div className="text-xs font-mono font-bold text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800/50">{rankInfo.progress.toFixed(2)}%</div>}
                 </div>
                 {rankInfo.next && (
                   <div className="relative z-10">
-                    <div className="w-full bg-black rounded h-1.5 lg:h-2 border border-emerald-700/50 overflow-hidden mb-1">
-                      <div className="bg-emerald-500 h-full transition-all duration-1000 relative shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: `${rankInfo.progress}%` }}></div>
+                    <div className="w-full bg-black/60 rounded h-2 border border-emerald-800/50 overflow-hidden mb-1.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]">
+                      <div className="bg-emerald-500 h-full transition-all duration-1000 relative shadow-[0_0_15px_rgba(16,185,129,0.8)]" style={{ width: `${rankInfo.progress}%` }}></div>
                     </div>
-                    <div className="flex justify-between text-[9px] lg:text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-400 uppercase tracking-widest">
                       <span>{formatCurrency(gameState.lifetimeCapital, nota)}</span>
                       <span>Next: {rankInfo.next.name} ({formatCurrency(rankInfo.next.req, nota)})</span>
                     </div>
@@ -1175,18 +1237,18 @@
                 )}
               </div>
 
-              {/* Central Clicker */}
-              <div ref={clickContainerRef} className="flex-1 glass-panel lg:rounded-xl flex flex-col items-center justify-center relative overflow-hidden group border-b lg:border border-emerald-700/30 bg-[#080c11]/90 lg:shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
+              {/* Central Telemetry & Clicker */}
+              <div ref={clickContainerRef} className="flex-1 glass-panel lg:rounded-2xl flex flex-col items-center justify-center relative overflow-hidden border-b lg:border border-emerald-700/30 bg-[#070b10] lg:shadow-[inset_0_0_80px_rgba(0,0,0,0.8)] py-8 lg:py-0">
                 
                 {gameState.monopolyBuff.active && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-950/90 border border-amber-500 text-amber-300 px-4 py-1.5 rounded font-mono font-bold tracking-widest uppercase text-[10px] lg:text-xs animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center gap-2 z-20 backdrop-blur-md whitespace-nowrap">
-                    <i className="fa-solid fa-chart-line"></i> SYSTEM OVERRIDE x7 <i className="fa-solid fa-chart-line"></i>
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-amber-950/90 border border-amber-500 text-amber-300 px-6 py-2 rounded-lg font-mono font-bold tracking-widest uppercase text-xs animate-pulse shadow-[0_0_30px_rgba(245,158,11,0.6)] flex items-center gap-2 z-20 backdrop-blur-md whitespace-nowrap">
+                    <i className="fa-solid fa-chart-line text-lg"></i> SYSTEM OVERRIDE x7 <i className="fa-solid fa-chart-line text-lg"></i>
                   </div>
                 )}
 
-                <div className="relative z-10 w-48 h-48 lg:w-64 lg:h-64 flex items-center justify-center mt-2 lg:mt-0">
-                  <div className={`absolute inset-0 border rounded-full animate-spin-slow pointer-events-none ${finances.isBankrupt ? 'border-red-500/30' : 'border-emerald-500/30'}`}></div>
-                  <div className={`absolute inset-4 border rounded-full animate-spin-slower-reverse pointer-events-none ${finances.isBankrupt ? 'border-red-700/60' : 'border-emerald-700/60'}`}></div>
+                <div className="relative z-10 w-56 h-56 lg:w-72 lg:h-72 flex items-center justify-center">
+                  <div className={`absolute inset-0 border-2 rounded-full animate-spin-slow pointer-events-none ${finances.isBankrupt ? 'border-red-500/30' : 'border-emerald-500/30'}`}></div>
+                  <div className={`absolute inset-6 border-2 border-dashed rounded-full animate-spin-slower-reverse pointer-events-none ${finances.isBankrupt ? 'border-red-700/50' : 'border-emerald-700/50'}`}></div>
                   
                   <button 
                     onPointerDown={startHoldClick}
@@ -1194,76 +1256,86 @@
                     onPointerLeave={endHoldClick}
                     onPointerCancel={endHoldClick}
                     onContextMenu={(e)=>e.preventDefault()}
-                    className={`relative w-40 h-40 lg:w-52 lg:h-52 rounded-full bg-[#030507] border-2 flex items-center justify-center hold-btn transition-all duration-200 
-                      ${finances.isBankrupt ? 'border-red-600 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : gameState.monopolyBuff.active ? 'border-amber-400 shadow-[0_0_100px_rgba(245,158,11,0.3)]' : 'border-emerald-600 hover:border-emerald-400 shadow-[0_0_60px_rgba(16,185,129,0.15)]'}`}
+                    className={`relative w-44 h-44 lg:w-56 lg:h-56 rounded-full bg-[#040608] border-4 flex items-center justify-center hold-btn transition-all duration-200 z-10
+                      ${finances.isBankrupt ? 'border-red-600 shadow-[0_0_80px_rgba(239,68,68,0.4)]' : gameState.monopolyBuff.active ? 'border-amber-400 shadow-[0_0_120px_rgba(245,158,11,0.4)]' : 'border-emerald-600 hover:border-emerald-400 shadow-[0_0_80px_rgba(16,185,129,0.2)]'}`}
                   >
-                    <div className={`absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(${finances.isBankrupt ? '239,68,68' : '16,185,129'},0.15),transparent)]`}></div>
-                    <i className={`fa-solid ${finances.isBankrupt ? 'fa-skull text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.9)]' : gameState.monopolyBuff.active ? 'fa-globe text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.9)]' : 'fa-globe text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.9)]'} text-6xl lg:text-8xl relative z-10`}></i>
+                    <div className={`absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(${finances.isBankrupt ? '239,68,68' : '16,185,129'},0.2),transparent)]`}></div>
+                    <i className={`fa-solid ${finances.isBankrupt ? 'fa-skull text-red-500 drop-shadow-[0_0_25px_rgba(239,68,68,0.9)]' : gameState.monopolyBuff.active ? 'fa-globe text-amber-400 drop-shadow-[0_0_25px_rgba(245,158,11,0.9)]' : 'fa-globe text-emerald-500 drop-shadow-[0_0_25px_rgba(16,185,129,0.9)]'} text-7xl lg:text-8xl relative z-10 transition-transform transform ${activeClickHoldRef.current?.isHolding ? 'scale-90' : 'scale-100'}`}></i>
                   </button>
                 </div>
                 
-                <p className={`mt-6 lg:mt-10 text-[10px] lg:text-xs font-mono tracking-widest uppercase flex items-center gap-2 bg-[#05080a] px-4 py-1.5 lg:py-2 rounded border ${finances.isBankrupt ? 'text-red-400 border-red-700/50' : 'text-emerald-400 border-emerald-700/50'}`}>
-                  <i className="fa-solid fa-fingerprint animate-pulse"></i> {finances.isBankrupt ? 'Manual Bailout Extraction' : 'Extract Capital'}
+                <p className={`mt-8 text-[10px] lg:text-xs font-mono font-bold tracking-widest uppercase flex items-center gap-2 bg-[#05080a] px-5 py-2 rounded-lg border ${finances.isBankrupt ? 'text-red-400 border-red-800 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'text-emerald-400 border-emerald-800/60 shadow-[0_0_15px_rgba(16,185,129,0.15)]'}`}>
+                  <i className="fa-solid fa-fingerprint animate-pulse"></i> {finances.isBankrupt ? 'Manual Bailout Required' : 'Extract Capital'}
                 </p>
 
-                {/* --- TIME FRAME STATS --- */}
-                <div className="mt-6 lg:mt-8 grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 w-full max-w-[90%] lg:max-w-md mx-auto z-20">
-                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Sec</span>
-                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net, nota)}</span>
+                {/* HYPE & LOGISTICS TELEMETRY */}
+                <div className="mt-8 w-full max-w-[85%] lg:max-w-md flex flex-col gap-4 z-20 bg-black/40 p-4 rounded-xl border border-white/5">
+                    <div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            <span>Consumer Hype</span>
+                            <span className="text-emerald-400 font-mono">x{finances.hypeBoost?.toFixed(2) || "1.00"}</span>
+                        </div>
+                        <div className="h-2 bg-black border border-emerald-900/50 rounded-full overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                            <div className="h-full bg-emerald-500 transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.8)]" style={{ width: `${(gameState.hype / 5) * 100}%` }}></div>
+                        </div>
                     </div>
-                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Min</span>
-                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 60, nota)}</span>
-                    </div>
-                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Hour</span>
-                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 3600, nota)}</span>
-                    </div>
-                    <div className="bg-[#101820]/80 border border-emerald-900/60 p-2 rounded flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mb-0.5">Net / Day</span>
-                      <span className={`text-[10px] lg:text-xs font-mono font-bold ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 86400, nota)}</span>
+                    <div>
+                        <div className={`flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5 ${finances.isStalled ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>
+                            <span>Ledger Backlog {finances.isStalled && "[STALLED]"}</span>
+                            <span className="font-mono">{formatNumber(gameState.backlog, nota)} / {formatNumber(finances.logCap, nota)}</span>
+                        </div>
+                        <div className="h-2 bg-black border border-emerald-900/50 rounded-full overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                            <div className={`h-full transition-all duration-300 ${finances.isStalled ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]'}`} style={{ width: `${Math.min(100, (gameState.backlog / (finances.logCap || 1)) * 100)}%` }}></div>
+                        </div>
                     </div>
                 </div>
 
-                {floatingTexts.map(ft => (
-                  <div key={ft.id} className={`absolute font-black font-mono pointer-events-none z-50 text-lg lg:text-xl text-${ft.colorCode}-400 drop-shadow-[0_0_10px_currentColor]`} style={{ left: ft.x, top: ft.y, animation: 'floatUpAndFade 1s ease-out forwards' }}>
+                {/* FINANCIAL GRID DASHBOARD */}
+                <div className="mt-6 w-full max-w-[90%] lg:max-w-xl grid grid-cols-2 lg:grid-cols-4 gap-3 z-20">
+                    <div className="bg-[#0b1016]/90 border border-emerald-800/40 p-3 rounded-xl flex flex-col items-center justify-center shadow-[inset_0_0_15px_rgba(0,0,0,0.8)] relative overflow-hidden group hover:border-emerald-600 transition-colors">
+                      <div className={`absolute inset-0 opacity-10 ${finances.net < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+                      <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mb-1">Net / Sec</span>
+                      <span className={`text-sm lg:text-base font-mono font-black tracking-tighter ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net, nota)}</span>
+                    </div>
+                    <div className="bg-[#0b1016]/90 border border-emerald-800/40 p-3 rounded-xl flex flex-col items-center justify-center shadow-[inset_0_0_15px_rgba(0,0,0,0.8)] relative overflow-hidden group hover:border-emerald-600 transition-colors">
+                      <div className={`absolute inset-0 opacity-10 ${finances.net < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+                      <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mb-1">Net / Min</span>
+                      <span className={`text-sm lg:text-base font-mono font-black tracking-tighter ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 60, nota)}</span>
+                    </div>
+                    <div className="bg-[#0b1016]/90 border border-emerald-800/40 p-3 rounded-xl flex flex-col items-center justify-center shadow-[inset_0_0_15px_rgba(0,0,0,0.8)] relative overflow-hidden group hover:border-emerald-600 transition-colors">
+                      <div className={`absolute inset-0 opacity-10 ${finances.net < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+                      <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mb-1">Net / Hour</span>
+                      <span className={`text-sm lg:text-base font-mono font-black tracking-tighter ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 3600, nota)}</span>
+                    </div>
+                    <div className="bg-[#0b1016]/90 border border-emerald-800/40 p-3 rounded-xl flex flex-col items-center justify-center shadow-[inset_0_0_15px_rgba(0,0,0,0.8)] relative overflow-hidden group hover:border-emerald-600 transition-colors">
+                      <div className={`absolute inset-0 opacity-10 ${finances.net < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+                      <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mb-1">Net / Day</span>
+                      <span className={`text-sm lg:text-base font-mono font-black tracking-tighter ${finances.net < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{formatCurrency(finances.net * 86400, nota)}</span>
+                    </div>
+                </div>
+
+                {gameState.floatingTexts.map(ft => (
+                  <div key={ft.id} className={`absolute font-black font-mono pointer-events-none z-50 text-xl lg:text-2xl text-${ft.colorCode}-400 drop-shadow-[0_0_15px_currentColor]`} style={{ left: ft.x, top: ft.y, animation: 'floatUpAndFade 1s ease-out forwards' }}>
                     {ft.text}
                   </div>
                 ))}
               </div>
-
-              {/* Minimal Analytics Bar */}
-              <div className="glass-panel lg:rounded-xl p-3 lg:p-4 shrink-0 flex gap-2 lg:gap-4 divide-x divide-emerald-700/50 border-b lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl mb-16 lg:mb-0 items-center justify-between">
-                <div className="px-2 flex-1 text-center">
-                  <div className="text-[9px] lg:text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-1">Gross Output</div>
-                  <div className="text-sm lg:text-base font-mono font-bold text-emerald-300">{formatCurrency(finances.gross, nota)}/s</div>
-                </div>
-                <div className="px-2 lg:px-4 flex-1 text-center">
-                  <div className="text-[9px] lg:text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-1">Upkeep</div>
-                  <div className="text-sm lg:text-base font-mono font-bold text-red-400">-{formatCurrency(finances.upkeep, nota)}/s</div>
-                </div>
-                <div className="px-2 lg:px-4 flex-1 text-center">
-                  <div className="text-[9px] lg:text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-1">Taxation</div>
-                  <div className="text-sm lg:text-base font-mono font-bold text-amber-400">{(finances.taxRate * 100).toFixed(0)}%</div>
-                </div>
-              </div>
             </section>
 
-            {/* RIGHT COLUMN: Strategy & Settings */}
-            <section className={`flex-1 lg:flex-[0_0_350px] flex flex-col min-h-0 glass-panel lg:rounded-xl overflow-hidden border-t lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl ${mobileTab === 'strategy' ? 'flex' : 'hidden lg:flex'}`}>
+            {/* STRATEGY & SETTINGS PANEL */}
+            <section className={`flex-1 lg:flex-[0_0_380px] flex flex-col min-h-0 glass-panel lg:rounded-2xl overflow-hidden border-t lg:border border-emerald-700/30 bg-[#0a0f16]/90 lg:shadow-2xl ${mobileTab === 'strategy' ? 'flex' : 'hidden lg:flex'}`}>
               
-              <div className="flex p-2 gap-1 lg:gap-2 bg-[#101820]/90 border-b border-emerald-700/50 shrink-0">
-                <button onClick={() => setStrategyTab('policies')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider ${strategyTab === 'policies' ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}>Policies</button>
-                <button onClick={() => setStrategyTab('prestige')} className={`flex-[1.5] py-2 text-[10px] lg:text-xs font-mono font-bold rounded transition-all uppercase tracking-wider flex items-center justify-center gap-1 ${strategyTab === 'prestige' ? 'bg-amber-900/50 text-amber-300 border border-amber-400/60' : 'text-slate-400 hover:bg-white/10 border border-transparent'}`}><i className="fa-solid fa-landmark"></i> Prestige</button>
-                <button onClick={() => setStrategyTab('stats')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'stats' ? 'bg-blue-900/50 text-blue-300 border-blue-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="Statistics"><i className="fa-solid fa-chart-bar"></i></button>
-                <button onClick={() => setStrategyTab('settings')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'settings' ? 'bg-slate-700 text-white border-slate-500' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="Settings"><i className="fa-solid fa-cog"></i></button>
-                <button onClick={() => setStrategyTab('about')} className={`flex-1 py-2 text-[10px] lg:text-xs rounded transition-all flex items-center justify-center border ${strategyTab === 'about' ? 'bg-purple-900/50 text-purple-300 border-purple-400/60' : 'text-slate-400 hover:bg-white/10 border-transparent'}`} title="About"><i className="fa-solid fa-user-astronaut"></i></button>
+              <div className="flex p-2 gap-1.5 lg:gap-2 bg-[#0d131a] border-b border-emerald-700/50 shrink-0 cyber-panel-border">
+                <button onClick={() => setStrategyTab('policies')} className={`flex-[1.5] py-2.5 text-[10px] lg:text-xs font-mono font-bold rounded-lg transition-all uppercase tracking-widest ${strategyTab === 'policies' ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'text-slate-400 hover:text-white border border-transparent'}`}>Policies</button>
+                <button onClick={() => setStrategyTab('prestige')} className={`flex-[1.5] py-2.5 text-[10px] lg:text-xs font-mono font-bold rounded-lg transition-all uppercase tracking-widest flex items-center justify-center gap-1.5 ${strategyTab === 'prestige' ? 'bg-amber-900/50 text-amber-300 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:text-white border border-transparent'}`}><i className="fa-solid fa-landmark"></i> Prestige</button>
+                <button onClick={() => setStrategyTab('stats')} className={`flex-1 py-2.5 text-xs rounded-lg transition-all flex items-center justify-center border ${strategyTab === 'stats' ? 'bg-blue-900/50 text-blue-300 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-400 hover:text-white border border-transparent'}`} title="Statistics"><i className="fa-solid fa-chart-pie"></i></button>
+                <button onClick={() => setStrategyTab('settings')} className={`flex-1 py-2.5 text-xs rounded-lg transition-all flex items-center justify-center border ${strategyTab === 'settings' ? 'bg-slate-700 text-white border-slate-500 shadow-[0_0_15px_rgba(100,116,139,0.3)]' : 'text-slate-400 hover:text-white border border-transparent'}`} title="Settings"><i className="fa-solid fa-sliders-h"></i></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 relative pb-20 lg:pb-3">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 lg:p-4 relative pb-20 lg:pb-4">
+                
                 {strategyTab === 'policies' && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 lg:space-y-4">
                     {Object.entries(gameState.policyRegistry).map(([key, upg]) => {
                       const count = gameState.policies[key] || 0;
                       const drift = gameState.prestigeUpgrades.bailouts || 0;
@@ -1271,15 +1343,15 @@
                       const canAfford = gameState.capital >= cost;
 
                       return (
-                        <div key={key} className={`bg-[#101820]/70 border ${canAfford ? 'border-cyan-700/50' : 'border-white/5 opacity-80'} rounded p-3 flex flex-col`}>
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="font-bold text-xs text-slate-100 uppercase tracking-widest truncate pr-2">{upg.name}</div>
-                            <div className="text-cyan-400 text-[9px] font-mono bg-black px-1.5 py-0.5 rounded border border-cyan-800 shrink-0">Lvl {count}</div>
+                        <div key={key} className={`bg-[#0b1016] border ${canAfford ? 'border-cyan-700/50' : 'border-white/5 opacity-80'} rounded-xl p-3 lg:p-4 flex flex-col shadow-[0_4px_10px_rgba(0,0,0,0.4)] transition-all`}>
+                          <div className="flex justify-between items-start mb-1.5">
+                            <div className="font-bold text-xs lg:text-sm text-slate-100 uppercase tracking-widest truncate pr-2 leading-tight">{upg.name}</div>
+                            <div className="text-cyan-400 text-[10px] font-mono font-bold bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-800/60 shrink-0">Lvl {count}</div>
                           </div>
-                          <div className="text-[10px] text-slate-300 mb-2 leading-tight">{upg.desc}</div>
+                          <div className="text-[10px] lg:text-xs text-slate-400 mb-3 leading-snug">{upg.desc}</div>
                           <div className="mt-auto flex justify-between items-center gap-2">
-                            <div className="text-[9px] text-emerald-400 font-mono bg-black px-1.5 py-0.5 rounded border border-emerald-800/60 truncate">
-                              {upg.effectType.replace('_', ' ')}: +{(upg.effectBase * (upg.effectType.includes('reduction') ? 100 : 1)).toFixed(upg.effectType.includes('reduction') ? 0 : 2)}{upg.effectType.includes('reduction') ? '%' : ''}
+                            <div className="text-[9px] text-emerald-400 font-mono bg-emerald-950/30 px-2 py-1 rounded border border-emerald-800/40 truncate">
+                              {upg.effectType.replace('_', ' ')}: <strong className="text-white">+{(upg.effectBase * (upg.effectType.includes('reduction') ? 100 : 1)).toFixed(upg.effectType.includes('reduction') ? 0 : 2)}{upg.effectType.includes('reduction') ? '%' : ''}</strong>
                             </div>
                             <button
                               onPointerDown={(e) => canAfford && startHoldBuy('policy', key, e)}
@@ -1288,9 +1360,9 @@
                               onPointerCancel={endHoldBuy}
                               onContextMenu={(e)=>e.preventDefault()}
                               disabled={!canAfford}
-                              className={`hold-btn shrink-0 px-3 py-1.5 rounded font-mono text-[10px] lg:text-xs font-bold flex items-center gap-1 transition-colors border ${canAfford ? 'bg-cyan-900/40 hover:bg-cyan-900/60 text-cyan-300 border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-black/50 text-slate-500 border-transparent'}`}
+                              className={`hold-btn shrink-0 px-3 py-1.5 rounded-lg font-mono text-[10px] lg:text-xs font-bold flex items-center gap-1.5 transition-all border ${canAfford ? 'bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-black/50 text-slate-500 border-white/10'}`}
                             >
-                              {formatCurrency(cost, nota)}
+                              <i className="fa-solid fa-download"></i> {formatCurrency(cost, nota)}
                             </button>
                           </div>
                         </div>
@@ -1300,38 +1372,39 @@
                 )}
 
                 {strategyTab === 'prestige' && (
-                  <div className="space-y-4">
-                    <div className="bg-[#101820]/90 border border-amber-700/50 rounded p-4 relative overflow-hidden text-center shadow-[inset_0_0_15px_rgba(245,158,11,0.15)]">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none -mt-10 -mr-10"></div>
-                      <i className="fa-solid fa-sync text-2xl text-amber-400 mb-2"></i>
-                      <h2 className="text-sm font-black text-white uppercase tracking-widest mb-1">Hostile Takeover</h2>
-                      <p className="text-[10px] text-slate-300 mb-3 font-mono">Liquidate all physical assets for permanent Equity.</p>
+                  <div className="space-y-5">
+                    <div className="bg-[#0f151c] border border-amber-600/50 rounded-xl p-5 relative overflow-hidden text-center shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_0_20px_rgba(245,158,11,0.1)]">
+                      <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-[40px] pointer-events-none -mt-10 -mr-10"></div>
+                      <i className="fa-solid fa-sync text-3xl text-amber-400 mb-3 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"></i>
+                      <h2 className="text-base font-black text-white uppercase tracking-widest mb-1.5">Hostile Takeover</h2>
+                      <p className="text-[10px] lg:text-xs text-slate-300 mb-4 font-mono leading-relaxed">Liquidate all physical assets & capital to secure permanent Equity in the Hegemony.</p>
                       
-                      <div className="bg-black rounded border border-amber-800/60 py-2 mb-3">
-                        <div className="text-[9px] text-amber-500 font-mono uppercase tracking-widest">Gain Equity</div>
-                        <div className="text-xl font-black text-amber-400 font-mono drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">+{formatNumber(calculateBuyoutRewards(), nota)}</div>
-                        <div className="text-[9px] text-slate-400 mt-1 font-mono">Next: {formatCurrency(getNextBuyoutReq(), nota)}</div>
+                      <div className="bg-black/60 rounded-lg border border-amber-800/40 p-3 mb-4 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                        <div className="text-[9px] text-amber-500 font-mono uppercase tracking-widest mb-1">Vested Equity Gain</div>
+                        <div className="text-2xl font-black text-amber-400 font-mono drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]">+{formatNumber(calculateBuyoutRewards(), nota)}</div>
+                        <div className="text-[9px] text-slate-400 mt-1.5 font-mono border-t border-amber-900/30 pt-1.5">Next Point: {formatCurrency(getNextBuyoutReq(), nota)}</div>
                       </div>
-                      <button onClick={()=>setModalState({type: 'buyout'})} disabled={calculateBuyoutRewards() <= 0} className={`w-full py-2 rounded font-mono font-bold text-xs uppercase tracking-widest transition-all ${calculateBuyoutRewards() > 0 ? 'bg-amber-600 hover:bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-black/60 text-slate-500 cursor-not-allowed border border-white/10'}`}>
-                        Initiate
+                      <button onClick={()=>setModalState({type: 'buyout'})} disabled={calculateBuyoutRewards() <= 0} className={`w-full py-3 rounded-lg font-mono font-bold text-xs lg:text-sm uppercase tracking-widest transition-all ${calculateBuyoutRewards() > 0 ? 'bg-amber-600 hover:bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)]' : 'bg-black/60 text-slate-500 cursor-not-allowed border border-white/10'}`}>
+                        Initiate Takeover
                       </button>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 lg:space-y-4">
+                      <div className="text-xs font-black text-amber-500 uppercase tracking-widest border-b border-amber-900/50 pb-1 mb-2">Equity Upgrades</div>
                       {Object.entries(gameState.prestigeRegistry).map(([key, upg]) => {
                         const count = gameState.prestigeUpgrades[key] || 0;
                         const cost = calculateCost(upg.cost, upg.costMult, count, 1, 0); 
                         const canAfford = gameState.equity >= cost;
                         return (
-                          <div key={key} className="bg-[#101820]/80 border border-amber-800/40 rounded p-3">
-                            <div className="flex justify-between items-start mb-1">
-                              <div className="font-bold text-xs text-amber-300 uppercase tracking-widest">{upg.name}</div>
-                              <div className="text-[9px] text-amber-500 font-mono mb-1">Level {count}</div>
+                          <div key={key} className="bg-[#0b1016] border border-amber-800/30 rounded-xl p-3 lg:p-4 shadow-[0_4px_10px_rgba(0,0,0,0.4)]">
+                            <div className="flex justify-between items-start mb-1.5">
+                              <div className="font-bold text-xs lg:text-sm text-amber-300 uppercase tracking-widest leading-tight">{upg.name}</div>
+                              <div className="text-[10px] text-amber-500 font-mono font-bold bg-amber-950/30 px-2 py-0.5 rounded border border-amber-800/40">Lvl {count}</div>
                             </div>
-                            <p className="text-[10px] text-slate-300 leading-tight mb-2">{upg.desc}</p>
+                            <p className="text-[10px] lg:text-xs text-slate-300 leading-snug mb-3">{upg.desc}</p>
                             <div className="flex justify-between items-center gap-2">
-                              <span className="text-[9px] text-emerald-400 font-mono bg-black px-1.5 py-0.5 rounded border border-emerald-800/60 truncate">
-                                {upg.effectType.replace('_', ' ')}: +{(upg.effectBase * (upg.effectType.includes('reduction') ? 100 : 1)).toFixed(upg.effectType.includes('reduction') ? 0 : 2)}{upg.effectType.includes('reduction') ? '%' : ''}
+                              <span className="text-[9px] text-emerald-400 font-mono bg-emerald-950/30 px-2 py-1 rounded border border-emerald-800/40 truncate">
+                                {upg.effectType.replace('_', ' ')}: <strong className="text-white">+{(upg.effectBase * (upg.effectType.includes('reduction') ? 100 : 1)).toFixed(upg.effectType.includes('reduction') ? 0 : 2)}{upg.effectType.includes('reduction') ? '%' : ''}</strong>
                               </span>
                               <button
                                 onPointerDown={(e) => canAfford && startHoldBuy('prestige', key, e)}
@@ -1340,9 +1413,9 @@
                                 onPointerCancel={endHoldBuy}
                                 onContextMenu={(e)=>e.preventDefault()}
                                 disabled={!canAfford}
-                                className={`hold-btn shrink-0 px-2 py-1.5 rounded font-mono text-[10px] lg:text-xs font-bold flex items-center gap-1 transition-colors border ${canAfford ? 'bg-amber-900/40 hover:bg-amber-900/60 text-amber-300 border-amber-500/60' : 'bg-black/60 text-slate-500 border-transparent'}`}
+                                className={`hold-btn shrink-0 px-3 py-1.5 rounded-lg font-mono text-[10px] lg:text-xs font-bold flex items-center gap-1.5 transition-all border ${canAfford ? 'bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'bg-black/60 text-slate-500 border-white/10'}`}
                               >
-                                {formatNumber(cost, nota)} <i className="fa-solid fa-shield-alt"></i>
+                                {formatNumber(cost, nota)} <i className="fa-solid fa-shield-alt text-[10px]"></i>
                               </button>
                             </div>
                           </div>
@@ -1353,142 +1426,151 @@
                 )}
 
                 {strategyTab === 'stats' && (
-                  <div className="space-y-4 pt-2">
-                    <h3 className="text-[10px] lg:text-xs font-bold text-blue-500 font-mono tracking-widest mb-3 border-b border-blue-800/50 pb-1 flex items-center gap-2"><i className="fa-solid fa-file-invoice-dollar"></i> Financial Report</h3>
+                  <div className="space-y-5 pt-2">
                     
-                    <div className="bg-[#101820]/80 border border-slate-800/40 rounded p-3 font-mono space-y-2 text-xs">
-                        <div className="flex justify-between items-center">
-                            <span className="text-slate-400">Gross Income:</span>
-                            <span className="text-emerald-400">{formatCurrency(finances.gross, nota)}/s</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-slate-400">Overhead/Upkeep:</span>
-                            <span className="text-red-400">-{formatCurrency(finances.upkeep, nota)}/s</span>
-                        </div>
-                        <div className="h-px bg-slate-800 my-1"></div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-slate-300">Taxable Profit:</span>
-                            <span className="text-white">{formatCurrency(finances.profit, nota)}/s</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-slate-400">Tax Bracket ({(finances.taxRate * 100).toFixed(0)}%):</span>
-                            <span className="text-amber-400">-{formatCurrency(finances.taxAmount, nota)}/s</span>
-                        </div>
-                        <div className="h-px bg-slate-800 my-1"></div>
-                        <div className="flex justify-between items-center font-bold text-sm">
-                            <span className="text-white">NET MARGIN:</span>
-                            <span className={finances.net < 0 ? 'text-red-500' : 'text-emerald-500'}>{formatCurrency(finances.net, nota)}/s</span>
-                        </div>
+                    <div className="bg-[#0b1016] border border-blue-900/40 rounded-xl p-4 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                      <h3 className="text-[10px] lg:text-xs font-bold text-blue-400 font-mono tracking-widest mb-3 border-b border-blue-900/50 pb-2 flex items-center gap-2 uppercase">
+                        <i className="fa-solid fa-file-invoice-dollar"></i> Tax & Margin Report
+                      </h3>
+                      <div className="font-mono space-y-2.5 text-xs text-slate-300">
+                          <div className="flex justify-between items-center">
+                              <span>Gross Income:</span>
+                              <span className="text-emerald-400 font-bold">{formatCurrency(finances.gross, nota)}/s</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                              <span>Operating Upkeep:</span>
+                              <span className="text-red-400">-{formatCurrency(finances.upkeep, nota)}/s</span>
+                          </div>
+                          <div className="h-px bg-slate-800/50 my-1"></div>
+                          <div className="flex justify-between items-center">
+                              <span className="text-slate-400">Taxable Profit:</span>
+                              <span className="text-white">{formatCurrency(finances.profit, nota)}/s</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                              <span>IRS Tax ({(finances.taxRate * 100).toFixed(0)}%):</span>
+                              <span className="text-amber-400 font-bold">-{formatCurrency(finances.taxAmount, nota)}/s</span>
+                          </div>
+                          <div className="h-px bg-slate-800/50 my-1"></div>
+                          <div className="flex justify-between items-center text-sm mt-2">
+                              <span className="text-white font-black uppercase tracking-widest">Net Margin:</span>
+                              <span className={`font-black ${finances.net < 0 ? 'text-red-500' : 'text-emerald-500'}`}>{formatCurrency(finances.net, nota)}/s</span>
+                          </div>
+                      </div>
                     </div>
 
-                    <h3 className="text-[10px] lg:text-xs font-bold text-purple-500 font-mono tracking-widest mb-3 border-b border-purple-800/50 pb-1 mt-6 flex items-center gap-2"><i className="fa-solid fa-tachometer-alt"></i> System Stress</h3>
-                    <div className="bg-[#101820]/80 border border-slate-800/40 rounded p-3 font-mono text-xs">
-                        <div className="text-slate-400 mb-1">Time Dilation Level:</div>
-                        <div className="text-purple-400 font-bold mb-2">{getDilationSeverity(applyDilation(1e13))}</div>
-                        <div className="text-[9px] text-slate-500 leading-tight">As capital velocity approaches infinity, Hegemony algorithms artificially dilate time, heavily taxing multiplier exponents to maintain system stability.</div>
+                    <div className="bg-[#0b1016] border border-purple-900/40 rounded-xl p-4 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                      <h3 className="text-[10px] lg:text-xs font-bold text-purple-400 font-mono tracking-widest mb-3 border-b border-purple-900/50 pb-2 flex items-center gap-2 uppercase">
+                        <i className="fa-solid fa-tachometer-alt"></i> System Stress
+                      </h3>
+                      <div className="font-mono text-xs">
+                          <div className="text-slate-400 mb-1.5">Time Dilation Level:</div>
+                          <div className="text-purple-400 font-black mb-3 text-sm">{getDilationSeverity(applyDilation(1e13))}</div>
+                          <div className="text-[10px] text-slate-500 leading-relaxed border-l-2 border-purple-900 pl-2">
+                            As capital velocity approaches infinity, Hegemony algorithms artificially dilate time, heavily taxing multiplier exponents to maintain system stability across lifetimes.
+                          </div>
+                      </div>
                     </div>
 
-                    <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1 mt-6">General Analytics</h3>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
-                         <i className="fa-solid fa-fingerprint text-emerald-500 mb-1"></i>
-                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Extractions</span>
-                         <span className="text-sm font-bold text-emerald-300 font-mono">{formatNumber(gameState.stats.totalClicks, nota)}</span>
-                       </div>
-                       <div className="bg-[#101820]/80 border border-emerald-800/40 rounded p-3 flex flex-col items-center justify-center text-center">
-                         <i className="fa-solid fa-clock text-cyan-500 mb-1"></i>
-                         <span className="text-[9px] text-slate-400 uppercase tracking-widest">Time Online</span>
-                         <span className="text-sm font-bold text-cyan-300 font-mono">{(gameState.stats.timePlayed / 3600).toFixed(1)}h</span>
-                       </div>
+                    <div className="bg-[#0b1016] border border-emerald-900/40 rounded-xl p-4 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-400 font-mono tracking-widest mb-3 border-b border-emerald-900/50 pb-2 flex items-center gap-2 uppercase">
+                        <i className="fa-solid fa-chart-line"></i> Analytics
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-[#070b10] border border-slate-800/60 rounded-lg p-3 flex flex-col items-center justify-center text-center">
+                            <i className="fa-solid fa-fingerprint text-emerald-500/70 mb-1.5 text-lg"></i>
+                            <span className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">Extractions</span>
+                            <span className="text-sm font-black text-emerald-300 font-mono">{formatNumber(gameState.stats.totalClicks, nota)}</span>
+                          </div>
+                          <div className="bg-[#070b10] border border-slate-800/60 rounded-lg p-3 flex flex-col items-center justify-center text-center">
+                            <i className="fa-solid fa-clock text-cyan-500/70 mb-1.5 text-lg"></i>
+                            <span className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">Time Online</span>
+                            <span className="text-sm font-black text-cyan-300 font-mono">{(gameState.stats.timePlayed / 3600).toFixed(1)}h</span>
+                          </div>
+                      </div>
                     </div>
+
                   </div>
                 )}
 
                 {strategyTab === 'settings' && (
                   <div className="space-y-6 pt-2">
-                    <div>
-                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1">Display</h3>
-                      <div className="flex items-center justify-between bg-[#101820]/80 border border-emerald-800/40 p-3 rounded">
-                        <div>
-                          <div className="font-bold text-xs lg:text-sm text-slate-100">Values</div>
-                        </div>
-                        <button onClick={() => setGameState(p=>({...p, settings: {...p.settings, notation: p.settings.notation === 'standard' ? 'scientific' : 'standard'}}))} className="bg-black text-emerald-400 font-mono py-1.5 px-3 rounded text-xs border border-emerald-700/60 hover:bg-[#101820]">
+                    
+                    <div className="bg-[#0b1016] border border-slate-800/50 rounded-xl p-4 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-4 border-b border-emerald-900/50 pb-2 uppercase"><i className="fa-solid fa-desktop"></i> Display Options</h3>
+                      <div className="flex items-center justify-between bg-[#070b10] border border-slate-700/50 p-3 rounded-lg">
+                        <div className="font-bold text-xs lg:text-sm text-slate-200">Numerical Notation</div>
+                        <button onClick={() => setGameState(p=>({...p, settings: {...p.settings, notation: p.settings.notation === 'standard' ? 'scientific' : 'standard'}}))} className="bg-emerald-900/30 text-emerald-300 font-mono font-bold py-1.5 px-4 rounded border border-emerald-700/50 hover:bg-emerald-800/50 transition-colors text-xs uppercase tracking-widest">
                           {nota === 'standard' ? 'Standard' : 'Scientific'}
                         </button>
                       </div>
                     </div>
 
-                    <div>
-                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-3 border-b border-emerald-800/50 pb-1">Data Storage</h3>
+                    <div className="bg-[#0b1016] border border-slate-800/50 rounded-xl p-4 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                      <h3 className="text-[10px] lg:text-xs font-bold text-emerald-500 font-mono tracking-widest mb-4 border-b border-emerald-900/50 pb-2 uppercase"><i className="fa-solid fa-hard-drive"></i> Data Management</h3>
 
-                      <div className="grid grid-cols-2 gap-3 mb-2">
-                        <button onClick={() => saveGame(true)} className="bg-black hover:bg-emerald-900/30 text-emerald-400 border border-emerald-700/60 p-3 rounded flex flex-col items-center gap-2 transition-colors">
-                          <i className="fa-solid fa-hard-drive text-lg lg:text-xl"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest">Sync</span>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <button onClick={() => saveGame(true)} className="bg-[#070b10] hover:bg-emerald-900/20 text-emerald-400 border border-emerald-800/50 p-4 rounded-lg flex flex-col items-center gap-2 transition-colors">
+                          <i className="fa-solid fa-cloud-arrow-up text-xl mb-1"></i><span className="text-[10px] font-bold uppercase tracking-widest">Force Sync</span>
                         </button>
-                        <button onClick={() => setModalState({type: 'wipe'})} className="bg-black hover:bg-red-900/30 text-red-400 border border-red-800/60 p-3 rounded flex flex-col items-center gap-2 transition-colors">
-                          <i className="fa-solid fa-skull text-lg lg:text-xl"></i><span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest">Purge</span>
+                        <button onClick={() => setModalState({type: 'wipe'})} className="bg-[#070b10] hover:bg-red-900/20 text-red-400 border border-red-900/50 p-4 rounded-lg flex flex-col items-center gap-2 transition-colors">
+                          <i className="fa-solid fa-skull text-xl mb-1"></i><span className="text-[10px] font-bold uppercase tracking-widest">Purge Save</span>
                         </button>
                       </div>
                       
-                      <div className="text-[9px] text-slate-400 font-mono text-center mb-4 flex items-center justify-center gap-1">
-                        <i className="fa-solid fa-check-circle text-emerald-500"></i> Local storage auto-syncs every 10s.
+                      <div className="text-[9px] text-slate-500 font-mono text-center mb-5 flex items-center justify-center gap-1 bg-black/40 py-1.5 rounded">
+                        <i className="fa-solid fa-check-circle text-emerald-600"></i> Auto-syncs to local storage every 10s.
                       </div>
                       
-                      <button onClick={() => { 
-                        try {
-                          const saveStr = btoa(encodeURIComponent(JSON.stringify(stateRef.current)));
-                          navigator.clipboard.writeText(saveStr); 
-                          showToast("Copied to Clipboard!"); 
-                        } catch(e) { showToast("Export Error"); }
-                      }} className="w-full bg-black hover:bg-slate-900 text-slate-200 font-mono font-bold py-2 rounded text-xs transition-colors border border-slate-600 mb-3 flex items-center justify-center gap-2 uppercase tracking-widest">
-                        <i className="fa-solid fa-copy"></i> Export Memory
-                      </button>
-                      
-                      <div className="flex gap-2">
-                        <input ref={importRef} type="text" placeholder="Paste memory string..." className="flex-1 bg-black border border-slate-600 rounded px-2 lg:px-3 py-2 text-[10px] lg:text-xs text-emerald-400 font-mono focus:outline-none focus:border-emerald-400" />
+                      <div className="space-y-3 border-t border-slate-800/50 pt-4">
                         <button onClick={() => { 
-                          try { 
-                            if(importRef.current?.value) { 
-                              const decodedStr = decodeURIComponent(atob(importRef.current.value));
-                              JSON.parse(decodedStr); 
-                              localStorage.setItem(SAVE_KEY, decodedStr); 
-                              window.location.reload(); 
-                            } 
-                          } catch(e) { showToast("Invalid Memory String"); } 
-                        }} className="bg-emerald-900/50 hover:bg-emerald-800/70 text-emerald-300 font-mono font-bold py-2 px-3 rounded text-[10px] lg:text-xs transition-colors border border-emerald-400/60 uppercase tracking-widest">
-                          Inject
+                          try {
+                            const saveStr = btoa(encodeURIComponent(JSON.stringify(stateRef.current)));
+                            navigator.clipboard.writeText(saveStr); 
+                            showToast("Memory String Copied!"); 
+                          } catch(e) { showToast("Export Error"); }
+                        }} className="w-full bg-[#070b10] hover:bg-slate-800 text-slate-300 font-mono font-bold py-3 rounded-lg text-[10px] lg:text-xs transition-colors border border-slate-700 flex items-center justify-center gap-2 uppercase tracking-widest">
+                          <i className="fa-solid fa-copy"></i> Copy Save String
                         </button>
+                        
+                        <div className="flex gap-2">
+                          <input ref={importRef} type="text" placeholder="Paste string here..." className="flex-1 bg-black border border-slate-700 rounded-lg px-3 py-2 text-[10px] lg:text-xs text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner" />
+                          <button onClick={() => { 
+                            try { 
+                              if(importRef.current?.value) { 
+                                const decodedStr = decodeURIComponent(atob(importRef.current.value));
+                                JSON.parse(decodedStr); 
+                                localStorage.setItem(SAVE_KEY, decodedStr); 
+                                window.location.reload(); 
+                              } 
+                            } catch(e) { showToast("Invalid Memory String"); } 
+                          }} className="bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 font-mono font-bold px-4 rounded-lg text-[10px] lg:text-xs transition-colors border border-emerald-600/50 uppercase tracking-widest">
+                            Inject
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {strategyTab === 'about' && (
-                  <div className="space-y-4 pt-2 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-black rounded border border-emerald-500 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] mb-2 mt-4">
-                       <i className="fa-solid fa-user-astronaut text-3xl text-emerald-400"></i>
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-black text-white tracking-widest uppercase">Developer Info</h2>
-                      <p className="text-[10px] text-emerald-500 font-mono mb-4 uppercase tracking-widest">Axiom Syndicate: v1.0</p>
+                    <div className="space-y-6 pt-4 flex flex-col items-center text-center">
+                      <div className="w-24 h-24 bg-black rounded-2xl border border-emerald-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)] mb-2 relative overflow-hidden">
+                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.2),transparent)]"></div>
+                         <i className="fa-solid fa-code-branch text-4xl text-emerald-400 relative z-10"></i>
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-black text-white tracking-widest uppercase mb-1">Axiom Syndicate</h2>
+                        <p className="text-xs text-emerald-500 font-mono font-bold uppercase tracking-widest">Version 0.7.1a // Unified</p>
+                      </div>
+
+                      <div className="w-full bg-[#0b1016] border border-emerald-900/40 rounded-xl p-5 text-left shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                          <h3 className="text-emerald-500 font-bold text-[10px] lg:text-xs uppercase tracking-widest border-b border-emerald-900/50 pb-2 mb-3"><i className="fa-solid fa-history"></i> Changelog History</h3>
+                          <div className="text-[10px] lg:text-xs text-slate-300 font-mono space-y-3 leading-relaxed">
+                              <p><span className="text-slate-500 font-bold">v0.1.0</span> - Initial Architecture deployed.</p>
+                              <p><span className="text-slate-500 font-bold">v0.5.0</span> - REALITY UPDATE. Upkeep margins, Corporate Tax Brackets, Bankruptcy limits, and Dilation Engine initiated.</p>
+                              <p><span className="text-slate-500 font-bold">v0.7.0</span> - Logistics tracking, Hype networks, and Memory Backlog systems added.</p>
+                              <p className="text-emerald-300 font-bold border-l-2 border-emerald-500 pl-3 py-1 bg-emerald-900/10"><span className="text-emerald-500">v0.7.1a</span> - UNIFICATION. Merged interactive systems with economics. Massive UI/UX telemetry overhaul.</p>
+                          </div>
+                      </div>
                     </div>
 
-                    <div className="w-full bg-[#101820]/80 border border-emerald-800/50 rounded p-4 text-left space-y-3">
-                        <h3 className="text-emerald-500 font-bold text-xs uppercase tracking-widest border-b border-emerald-800/50 pb-1">Changelog History</h3>
-                        <div className="text-[10px] text-slate-300 font-mono space-y-2">
-                            <p><span className="text-slate-500">v0.1.0</span> - Initial React logic.</p>
-                            <p><span className="text-slate-500">v0.3.5</span> - Added Data/Equity mechanics.</p>
-                            <p><span className="text-slate-500">v0.7.0</span> - Scalability checks.</p>
-                            <p className="text-emerald-400 font-bold"><span className="text-emerald-600">v1.0.0</span> - REALITY UPDATE. Added Upkeep Margins, Corporate Tax Brackets, Bankruptcy mechanics, and the 10-Year Dilation Engine to permanently halt exponential runaway.</p>
-                        </div>
-                    </div>
-
-                    <div className="w-full bg-black border border-purple-700/60 rounded p-4 text-left">
-                       <p className="text-[10px] text-slate-300 font-mono leading-relaxed">
-                         <strong className="text-purple-400">>> BUILT BY:</strong> <a href="https://www.youtube.com/@King_Nugget_AU" target="_blank" className="hover:text-purple-300 underline transition-colors">King_Nugget_AU</a><br/>
-                         A solo hobbyist project exploring extreme idle scaling.
-                       </p>
-                    </div>
                   </div>
                 )}
               </div>
@@ -1496,18 +1578,18 @@
           </main>
 
           {/* MOBILE BOTTOM NAVIGATION */}
-          <nav className="lg:hidden h-16 shrink-0 bg-[#0a0f16]/95 backdrop-blur-md border-t border-emerald-700/50 flex z-50 pb-safe">
-            <button onClick={() => setMobileTab('holdings')} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'holdings' ? 'text-emerald-400 bg-emerald-900/30' : 'text-slate-400 hover:text-slate-200'}`}>
-              <i className="fa-solid fa-building text-lg"></i>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Holdings</span>
+          <nav className="lg:hidden h-[72px] shrink-0 bg-[#070b10]/95 backdrop-blur-xl border-t border-emerald-800/40 flex z-50 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+            <button onClick={() => setMobileTab('holdings')} className={`flex-1 flex flex-col items-center justify-center gap-1.5 transition-colors ${mobileTab === 'holdings' ? 'text-emerald-400 bg-emerald-900/20 border-t-2 border-emerald-500' : 'text-slate-500 hover:text-slate-300 border-t-2 border-transparent'}`}>
+              <i className="fa-solid fa-building text-xl"></i>
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest">Holdings</span>
             </button>
-            <button onClick={() => setMobileTab('desk')} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'desk' ? 'text-white bg-white/10 shadow-inner' : 'text-slate-400 hover:text-slate-200'}`}>
-              <i className="fa-solid fa-fingerprint text-lg"></i>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Extract</span>
+            <button onClick={() => setMobileTab('desk')} className={`flex-1 flex flex-col items-center justify-center gap-1.5 transition-colors ${mobileTab === 'desk' ? 'text-white bg-white/5 border-t-2 border-white' : 'text-slate-500 hover:text-slate-300 border-t-2 border-transparent'}`}>
+              <i className="fa-solid fa-fingerprint text-xl"></i>
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest">Extract</span>
             </button>
-            <button onClick={() => setMobileTab('strategy')} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'strategy' ? 'text-cyan-400 bg-cyan-900/30' : 'text-slate-400 hover:text-slate-200'}`}>
-              <i className="fa-solid fa-network-wired text-lg"></i>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Strategy</span>
+            <button onClick={() => setMobileTab('strategy')} className={`flex-1 flex flex-col items-center justify-center gap-1.5 transition-colors ${mobileTab === 'strategy' ? 'text-cyan-400 bg-cyan-900/20 border-t-2 border-cyan-500' : 'text-slate-500 hover:text-slate-300 border-t-2 border-transparent'}`}>
+              <i className="fa-solid fa-network-wired text-xl"></i>
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest">Strategy</span>
             </button>
           </nav>
         </div>
@@ -1518,8 +1600,8 @@
     root.render(<App />);
 
     console.clear();
-    console.log("%c Axiom Syndicate: Infinite Hegemony v1.0 ", "background: #020202; color: #10b981; font-weight: bold; padding: 4px; border-radius: 4px;");
-    console.log("%c [SYS]: Dilation engine active. Proceed with caution.", "color: #94a3b8; font-family: monospace;");
+    console.log("%c Axiom Syndicate: Infinite Hegemony v0.7.1a ", "background: #020202; color: #10b981; font-weight: bold; padding: 6px; border-radius: 4px; font-size: 14px;");
+    console.log("%c [SYS]: Unified mechanics online. Visual telemetry enhanced. Abyssal Dilation active.", "color: #94a3b8; font-family: monospace; font-size: 12px;");
   </script>
 </body>
 </html>
